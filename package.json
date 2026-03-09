@@ -1,5 +1,5 @@
 {
-  "name": "@clawtalk/plugin",
+  "name": "clawtalk",
   "version": "0.1.0",
   "description": "Voice calls, SMS, missions, and approvals via ClawTalk — OpenClaw plugin",
   "main": "./build/index.js",
@@ -36,5 +36,8 @@
     "openclaw.plugin.json",
     "skills"
   ],
+  "openclaw": {
+    "extensions": ["./src/index.ts"]
+  },
   "license": "MIT"
 }
