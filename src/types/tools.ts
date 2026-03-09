@@ -11,7 +11,7 @@ import type { EventType, StepStatus } from './missions.js';
 // ── Call Tools ────────────────────────────────────────────────
 
 export interface CallToolParams {
-  readonly to?: string;
+  readonly to: string;
   readonly greeting?: string;
   readonly purpose?: string;
 }

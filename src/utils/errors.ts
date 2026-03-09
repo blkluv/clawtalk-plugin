@@ -112,4 +112,11 @@ export class ToolError extends ClawTalkError {
   static timeout(tool: string, timeoutMs: number): ToolError {
     return new ToolError(tool, `Request timed out after ${timeoutMs}ms`, { timeoutMs });
   }
+
+  static fromError(tool: string, err: unknown): ToolError {
+    if (err instanceof ToolError) return err;
+    if (err instanceof ClawTalkError) return new ToolError(tool, err.message, { code: err.code });
+    const message = err instanceof Error ? err.message : String(err);
+    return new ToolError(tool, message);
+  }
 }
