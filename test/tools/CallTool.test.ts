@@ -16,16 +16,16 @@ function createMockClient(overrides: Record<string, unknown> = {}): ClawTalkClie
         call_id: 'call_123',
         status: 'initiated',
         direction: 'outbound',
-        from: '+15551234567',
-        to: '+353851234567',
       }),
       status: vi.fn().mockResolvedValue({
         call_id: 'call_123',
         status: 'answered',
-        duration: 45,
-        transcript: 'Hello there.',
+        direction: 'outbound',
+        duration_seconds: 45,
+        started_at: '2026-01-01T00:00:00Z',
+        user_id: 'user_1',
       }),
-      end: vi.fn().mockResolvedValue(undefined),
+      end: vi.fn().mockResolvedValue({ call_id: 'call_123', status: 'ending', duration_seconds: 45 }),
       ...overrides,
     },
   } as unknown as ClawTalkClient;
@@ -95,7 +95,8 @@ describe('CallTool', () => {
     const details = result.details as Record<string, unknown>;
 
     expect(details.to).toBeTruthy();
-    expect(details.from).toBeTruthy();
+    // POST /v1/calls returns no `from` — we set empty string
+    expect(details.from).toBe('');
   });
 });
 
@@ -124,7 +125,6 @@ describe('CallStatusTool', () => {
     const details = result.details as Record<string, unknown>;
     expect(details.status).toBe('answered');
     expect(details.duration).toBe(45);
-    expect(details.transcript).toBe('Hello there.');
   });
 
   it('ends call when action is "end"', async () => {

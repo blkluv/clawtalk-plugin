@@ -1,17 +1,33 @@
 /**
- * Tool registry — registers all Phase 4 agent tools with the OpenClaw plugin API.
+ * Tool registry — registers all agent tools with the OpenClaw plugin API.
  *
- * Each tool is a class instance with name, label, description, parameters (TypeBox schema),
- * and an execute() method returning { content: [{ type: "text", text }], details }.
+ * Phase 4: Call, SMS, Approve, Status
+ * Phase 5: Mission lifecycle, Assistants, Insights
  */
 
 import type { ResolvedClawTalkConfig } from '../config.js';
 import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { ApprovalManager } from '../services/ApprovalManager.js';
+import type { MissionService } from '../services/MissionService.js';
 import type { WebSocketService } from '../services/WebSocketService.js';
 import type { Logger } from '../types/plugin.js';
 import { ApproveTool } from './ApproveTool.js';
+import { AssistantsTool } from './AssistantsTool.js';
 import { CallStatusTool, CallTool } from './CallTool.js';
+import { InsightsTool } from './InsightsTool.js';
+import {
+  MissionCancelEventTool,
+  MissionCompleteTool,
+  MissionEventStatusTool,
+  MissionGetPlanTool,
+  MissionInitTool,
+  MissionListTool,
+  MissionLogEventTool,
+  MissionMemoryTool,
+  MissionScheduleTool,
+  MissionSetupAgentTool,
+  MissionUpdateStepTool,
+} from './MissionTool.js';
 import { SmsConversationsTool, SmsListTool, SmsTool } from './SmsTool.js';
 import { StatusTool } from './StatusTool.js';
 
@@ -22,6 +38,7 @@ export interface ToolServices {
   readonly client: ClawTalkClient;
   readonly approvalManager: ApprovalManager;
   readonly ws: WebSocketService;
+  readonly missions: MissionService;
   readonly logger: Logger;
 }
 
@@ -44,9 +61,11 @@ export interface ClawTalkTool {
 // ── Registry ────────────────────────────────────────────────
 
 export function createTools(services: ToolServices): ClawTalkTool[] {
-  const { config, client, approvalManager, ws, logger } = services;
+  const { config, client, approvalManager, ws, missions, logger } = services;
+  const missionDeps = { missions, logger };
 
   return [
+    // Phase 4
     new CallTool({ client, logger }),
     new CallStatusTool({ client, logger }),
     new SmsTool({ client, logger }),
@@ -54,6 +73,23 @@ export function createTools(services: ToolServices): ClawTalkTool[] {
     new SmsConversationsTool({ client, logger }),
     new ApproveTool({ approvalManager, logger }),
     new StatusTool({ config, client, ws, logger }),
+
+    // Phase 5: Mission lifecycle
+    new MissionInitTool(missionDeps),
+    new MissionSetupAgentTool(missionDeps),
+    new MissionScheduleTool(missionDeps),
+    new MissionEventStatusTool(missionDeps),
+    new MissionCompleteTool(missionDeps),
+    new MissionUpdateStepTool(missionDeps),
+    new MissionLogEventTool(missionDeps),
+    new MissionMemoryTool(missionDeps),
+    new MissionListTool(missionDeps),
+    new MissionGetPlanTool(missionDeps),
+    new MissionCancelEventTool(missionDeps),
+
+    // Phase 5: Standalone
+    new AssistantsTool({ client, logger }),
+    new InsightsTool({ client, logger }),
   ];
 }
 

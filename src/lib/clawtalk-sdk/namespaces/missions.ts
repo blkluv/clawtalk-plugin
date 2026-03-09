@@ -9,7 +9,6 @@ import type {
   MissionEventResponse,
   MissionListResponse,
   MissionResponse,
-  PlanResponse,
   PlanStepResponse,
   RunListResponse,
   RunResponse,
@@ -52,21 +51,21 @@ class RunsNamespace {
 class PlansNamespace {
   constructor(private readonly request: RequestFn) {}
 
-  async create(missionId: string, runId: string, steps: CreatePlanStepInput[]): Promise<PlanResponse> {
-    const result = await this.request<{ data?: PlanResponse }>(
+  async create(missionId: string, runId: string, steps: CreatePlanStepInput[]): Promise<PlanStepResponse[]> {
+    const result = await this.request<{ data?: PlanStepResponse[] }>(
       'POST',
       resolve(ENDPOINTS.createPlan.path, { missionId, runId }),
       { steps },
     );
-    return result.data ?? (result as unknown as PlanResponse);
+    return result.data ?? [];
   }
 
-  async get(missionId: string, runId: string): Promise<PlanResponse> {
-    const result = await this.request<{ data?: PlanResponse }>(
+  async get(missionId: string, runId: string): Promise<PlanStepResponse[]> {
+    const result = await this.request<{ data?: PlanStepResponse[] }>(
       'GET',
       resolve(ENDPOINTS.getPlan.path, { missionId, runId }),
     );
-    return result.data ?? (result as unknown as PlanResponse);
+    return result.data ?? [];
   }
 
   async updateStep(missionId: string, runId: string, stepId: string, status: string): Promise<PlanStepResponse> {

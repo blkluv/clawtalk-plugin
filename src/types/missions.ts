@@ -3,6 +3,8 @@
  *
  * Missions represent multi-step AI workflows: create mission → create run →
  * create plan → schedule events → poll → complete.
+ *
+ * State shape mirrors the Python telnyx_api.py flat per-slug structure.
  */
 
 // ── Enums ─────────────────────────────────────────────────────
@@ -33,69 +35,29 @@ export const EventType = {
 
 export type EventType = (typeof EventType)[keyof typeof EventType];
 
-// ── Domain Types ──────────────────────────────────────────────
-
-export interface Mission {
-  readonly id: string;
-  readonly name: string;
-  readonly instructions: string;
-  readonly status: 'active' | 'completed' | 'failed' | 'cancelled';
-  readonly created_at: string;
-}
-
-export interface Run {
-  readonly id: string;
-  readonly mission_id: string;
-  readonly status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
-  readonly input: Record<string, unknown>;
-  readonly result?: Record<string, unknown>;
-  readonly created_at: string;
-  readonly completed_at?: string;
-}
-
-export interface PlanStep {
-  readonly id: string;
-  readonly title: string;
-  readonly description?: string;
-  readonly status: StepStatus;
-  readonly order: number;
-}
-
-export interface Plan {
-  readonly steps: PlanStep[];
-}
-
-export interface MissionEvent {
-  readonly id: string;
-  readonly mission_id: string;
-  readonly run_id: string;
-  readonly type: EventType;
-  readonly summary: string;
-  readonly step_id?: string;
-  readonly payload?: Record<string, unknown>;
-  readonly created_at: string;
-}
-
 // ── State Management ──────────────────────────────────────────
 
-/** Per-mission local state, persisted in .missions_state.json */
-export interface MissionState {
-  readonly slug: string;
-  readonly missionId: string;
-  readonly runId: string;
-  readonly planSteps: PlanStep[];
-  readonly assistants: Array<{
-    readonly id: string;
-    readonly name: string;
-    readonly phone: string;
-  }>;
-  readonly createdAt: string;
+/**
+ * Per-mission local state, persisted as flat key/value per slug.
+ * Mirrors Python's .missions_state.json structure exactly.
+ */
+export interface MissionSlugState {
+  mission_name?: string;
+  mission_id?: string;
+  run_id?: string;
+  assistant_id?: string;
+  agent_phone?: string;
+  phone_number_id?: string;
+  created_at?: string;
+  last_updated?: string;
+  memory?: Record<string, unknown>;
 }
 
-/** Root state file shape */
-export interface MissionsStateFile {
-  readonly missions: Record<string, MissionState>;
-}
+/**
+ * Root state file: slug → flat state.
+ * e.g. { "my-mission": { mission_id: "...", run_id: "...", ... } }
+ */
+export type MissionsStateFile = Record<string, MissionSlugState>;
 
 // ── Service Method Params ─────────────────────────────────────
 
@@ -113,27 +75,52 @@ export interface InitMissionResult {
   readonly missionId: string;
   readonly runId: string;
   readonly slug: string;
-  readonly steps: PlanStep[];
+  readonly resumed: boolean;
 }
 
 export interface SetupAgentParams {
+  readonly missionSlug: string;
   readonly name: string;
   readonly instructions: string;
   readonly greeting?: string;
   readonly voice?: string;
   readonly model?: string;
+  readonly tools?: Array<Record<string, unknown>>;
+  readonly features?: string[];
+  readonly description?: string;
 }
 
 export interface SetupAgentResult {
   readonly assistantId: string;
-  readonly phone: string;
-  readonly connectionId: string;
+  readonly phone: string | null;
+}
+
+export interface CompleteMissionParams {
+  readonly missionSlug: string;
+  readonly summary: string;
+  readonly payload?: Record<string, unknown>;
+}
+
+export interface ScheduleCallEventParams {
+  readonly missionSlug: string;
+  readonly to: string;
+  readonly scheduledAt: string;
+  readonly stepId?: string;
+}
+
+export interface ScheduleSmsEventParams {
+  readonly missionSlug: string;
+  readonly to: string;
+  readonly scheduledAt: string;
+  readonly textBody: string;
+  readonly stepId?: string;
 }
 
 export interface LogEventParams {
-  readonly type: EventType;
+  readonly type: string;
   readonly summary: string;
-  readonly step_id?: string;
+  readonly agentId?: string;
+  readonly stepId?: string;
   readonly payload?: Record<string, unknown>;
 }
 

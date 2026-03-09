@@ -74,10 +74,10 @@ export class SmsTool {
       });
 
       const payload: SmsToolResult = {
-        messageId: result.message_id,
+        messageId: result.id,
         from: formatPhoneNumber(result.from ?? ''),
         status: result.status ?? 'sent',
-        message: `SMS sent to ${formatPhoneNumber(params.to)}. Message ID: ${result.message_id}`,
+        message: `SMS sent to ${formatPhoneNumber(params.to)}. Message ID: ${result.id}`,
       };
 
       return formatResult(payload);

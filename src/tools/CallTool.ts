@@ -66,8 +66,8 @@ export class CallTool {
 
       const payload: CallToolResult = {
         callId: result.call_id,
-        status: result.status ?? 'initiated',
-        from: formatPhoneNumber(result.from ?? ''),
+        status: result.status ?? 'initiating',
+        from: '',
         to: formatPhoneNumber(params.to),
         message: `Call initiated to ${formatPhoneNumber(params.to)}. Call ID: ${result.call_id}`,
       };
@@ -118,9 +118,8 @@ export class CallStatusTool {
       const payload: CallStatusToolResult = {
         callId: params.callId,
         status: result.status ?? 'unknown',
-        duration: result.duration,
-        transcript: result.transcript,
-        message: `Call ${params.callId}: ${result.status ?? 'unknown'}${result.duration ? ` (${result.duration}s)` : ''}`,
+        duration: result.duration_seconds ?? undefined,
+        message: `Call ${params.callId}: ${result.status ?? 'unknown'}${result.duration_seconds ? ` (${result.duration_seconds}s)` : ''}`,
       };
       return formatResult(payload);
     } catch (err) {

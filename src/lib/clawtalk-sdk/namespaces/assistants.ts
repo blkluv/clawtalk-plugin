@@ -26,25 +26,30 @@ class ScheduledEventsNamespace {
       run_id: params.run_id,
     };
 
-    if ('message' in params) {
-      body.type = 'sms';
-      body.message = params.message;
+    if (params.step_id) body.step_id = params.step_id;
+    if (params.metadata) body.metadata = params.metadata;
+
+    if ('text_body' in params) {
+      body.channel = 'sms';
+      body.text_body = params.text_body;
     } else {
-      body.type = 'call';
+      body.channel = 'call';
     }
 
-    return this.request<ScheduledEventResponse>(
+    const result = await this.request<{ event?: ScheduledEventResponse }>(
       'POST',
       resolve(ENDPOINTS.scheduleEvent.path, { assistantId: params.assistant_id }),
       body,
     );
+    return result.event ?? (result as unknown as ScheduledEventResponse);
   }
 
   async get(assistantId: string, eventId: string): Promise<ScheduledEventDetailResponse> {
-    return this.request<ScheduledEventDetailResponse>(
+    const result = await this.request<{ event?: ScheduledEventDetailResponse }>(
       'GET',
       resolve(ENDPOINTS.getScheduledEvent.path, { assistantId, eventId }),
     );
+    return result.event ?? (result as unknown as ScheduledEventDetailResponse);
   }
 
   async cancel(assistantId: string, eventId: string): Promise<void> {

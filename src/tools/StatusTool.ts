@@ -57,7 +57,7 @@ export class StatusTool {
       let userName: string | undefined;
       try {
         const me = await this.client.user.me();
-        userName = me.email;
+        userName = me.email ?? undefined;
       } catch {
         // API key might be invalid, still report other status
       }

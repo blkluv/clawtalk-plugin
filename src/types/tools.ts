@@ -6,7 +6,7 @@
  * defined alongside the tool implementations in src/tools/.
  */
 
-import type { EventType, StepStatus } from './missions.js';
+import type { StepStatus } from './missions.js';
 
 // ── Call Tools ────────────────────────────────────────────────
 
@@ -118,7 +118,7 @@ export interface MissionInitToolResult {
   readonly missionId: string;
   readonly runId: string;
   readonly slug: string;
-  readonly steps: Array<{ readonly id: string; readonly title: string }>;
+  readonly resumed: boolean;
   readonly message: string;
 }
 
@@ -133,48 +133,42 @@ export interface MissionSetupAgentToolParams {
 
 export interface MissionSetupAgentToolResult {
   readonly assistantId: string;
-  readonly phone: string;
+  readonly phone: string | null;
   readonly message: string;
 }
 
 export interface MissionScheduleToolParams {
-  readonly type: 'call' | 'sms';
-  readonly assistantId: string;
+  readonly slug: string;
+  readonly channel: 'call' | 'sms';
   readonly to: string;
-  readonly from: string;
   readonly scheduledAt: string;
-  readonly message?: string;
-  readonly missionId?: string;
-  readonly runId?: string;
+  readonly textBody?: string;
+  readonly stepId?: string;
 }
 
 export interface MissionScheduleToolResult {
   readonly eventId: string;
-  readonly type: string;
+  readonly channel: string;
   readonly scheduledAt: string;
   readonly message: string;
 }
 
-export interface MissionStatusToolParams {
-  readonly assistantId: string;
+export interface MissionEventStatusToolParams {
+  readonly slug: string;
   readonly eventId: string;
 }
 
-export interface MissionStatusToolResult {
+export interface MissionEventStatusToolResult {
   readonly eventId: string;
-  readonly type: string;
+  readonly channel: string;
   readonly status: string;
-  readonly callId?: string;
-  readonly callStatus?: string;
-  readonly callDuration?: number;
-  readonly conversationId?: string;
+  readonly callStatus?: string | null;
+  readonly conversationId?: string | null;
   readonly message: string;
 }
 
 export interface MissionCompleteToolParams {
   readonly slug: string;
-  readonly missionId: string;
-  readonly runId: string;
   readonly summary: string;
   readonly payload?: string; // JSON string
 }
@@ -184,8 +178,7 @@ export interface MissionCompleteToolResult {
 }
 
 export interface MissionUpdateStepToolParams {
-  readonly missionId: string;
-  readonly runId: string;
+  readonly slug: string;
   readonly stepId: string;
   readonly status: StepStatus;
 }
@@ -195,9 +188,8 @@ export interface MissionUpdateStepToolResult {
 }
 
 export interface MissionLogEventToolParams {
-  readonly missionId: string;
-  readonly runId: string;
-  readonly type: EventType;
+  readonly slug: string;
+  readonly type: string;
   readonly summary: string;
   readonly stepId?: string;
   readonly payload?: string; // JSON string
@@ -222,11 +214,19 @@ export interface MissionMemoryToolResult {
 export interface MissionListToolResult {
   readonly missions: Array<{
     readonly slug: string;
-    readonly missionId: string;
-    readonly name: string;
-    readonly status: string;
+    readonly missionName?: string;
+    readonly missionId?: string;
   }>;
   readonly message: string;
+}
+
+export interface MissionGetPlanToolParams {
+  readonly slug: string;
+}
+
+export interface MissionCancelEventToolParams {
+  readonly slug: string;
+  readonly eventId: string;
 }
 
 // ── Assistant Tool ────────────────────────────────────────────
@@ -254,9 +254,6 @@ export interface InsightsToolParams {
 }
 
 export interface InsightsToolResult {
-  readonly summary: string;
-  readonly sentiment: string;
-  readonly keyTopics: string[];
-  readonly actionItems: string[];
+  readonly data: unknown;
   readonly message: string;
 }

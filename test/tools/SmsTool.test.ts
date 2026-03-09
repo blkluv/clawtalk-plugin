@@ -13,7 +13,8 @@ function createMockClient(overrides: Record<string, unknown> = {}): ClawTalkClie
   return {
     sms: {
       send: vi.fn().mockResolvedValue({
-        message_id: 'msg_456',
+        id: 'msg_456',
+        telnyx_message_id: 'telnyx_msg_456',
         from: '+15551234567',
         to: '+353851234567',
         status: 'sent',
