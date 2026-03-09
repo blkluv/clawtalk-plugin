@@ -107,13 +107,15 @@ export interface ConversationsResponse {
 export interface CreateApprovalParams {
   readonly action: string;
   readonly details?: string;
-  readonly biometric?: boolean;
-  readonly timeout?: number;
+  readonly require_biometric?: boolean;
+  readonly expires_in?: number;
 }
 
 export interface ApprovalResponse {
   readonly request_id: string;
   readonly status: 'pending' | 'approved' | 'denied' | 'timeout' | 'no_devices' | 'no_devices_reached';
+  readonly devices_notified?: number;
+  readonly devices_failed?: number;
 }
 
 export interface ApprovalStatusResponse {

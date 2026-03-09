@@ -50,7 +50,8 @@ export interface WsCallResponse {
 export interface WsWalkieResponse {
   readonly type: 'walkie_response';
   readonly request_id: string;
-  readonly text: string;
+  readonly reply: string;
+  readonly error?: string;
 }
 
 export interface WsClientRestart {
@@ -98,8 +99,14 @@ export interface WsCallStarted extends WsEventBase {
 export interface WsCallEnded extends WsEventBase {
   readonly event: 'call.ended';
   readonly call_id: string;
-  readonly duration?: number;
+  readonly direction?: 'inbound' | 'outbound';
+  readonly duration_seconds?: number;
   readonly reason?: string;
+  readonly outcome?: 'voicemail' | 'voicemail_failed' | 'no_answer' | 'fax' | string;
+  readonly to_number?: string;
+  readonly purpose?: string;
+  readonly greeting?: string;
+  readonly voicemail_message?: string;
 }
 
 export interface WsDeepToolRequest extends WsEventBase {
@@ -107,7 +114,9 @@ export interface WsDeepToolRequest extends WsEventBase {
   readonly call_id: string;
   readonly request_id: string;
   readonly query: string;
-  readonly context: Record<string, unknown>;
+  readonly call_control_id?: string;
+  readonly urgency?: 'normal' | 'urgent';
+  readonly context?: string;
 }
 
 export interface WsSmsReceived extends WsEventBase {
