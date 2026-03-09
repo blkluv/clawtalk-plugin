@@ -213,6 +213,116 @@ export interface ScheduledEventDetailResponse extends ScheduledEventResponse {
   readonly completed_at?: string;
 }
 
+// ── Missions ──────────────────────────────────────────────────
+
+export interface CreateMissionParams {
+  readonly name: string;
+  readonly instructions: string;
+}
+
+export interface MissionResponse {
+  readonly id: string;
+  readonly name: string;
+  readonly instructions: string;
+  readonly status: string;
+  readonly created_at: string;
+}
+
+export interface MissionDetailResponse {
+  readonly mission: MissionResponse;
+}
+
+export interface MissionListResponse {
+  readonly missions: MissionResponse[];
+}
+
+// ── Runs ──────────────────────────────────────────────────────
+
+export interface CreateRunParams {
+  readonly input: Record<string, unknown>;
+}
+
+export interface RunResponse {
+  readonly id: string;
+  readonly run_id?: string;
+  readonly mission_id: string;
+  readonly status: string;
+  readonly input: Record<string, unknown>;
+  readonly result_summary?: string;
+  readonly result_payload?: Record<string, unknown>;
+  readonly created_at: string;
+  readonly completed_at?: string;
+}
+
+export interface RunUpdateParams {
+  readonly status?: string;
+  readonly result_summary?: string;
+  readonly result_payload?: Record<string, unknown>;
+}
+
+export interface RunListResponse {
+  readonly data: RunResponse[];
+}
+
+// ── Plans ─────────────────────────────────────────────────────
+
+export interface CreatePlanStepInput {
+  readonly title: string;
+  readonly description?: string;
+}
+
+export interface PlanStepResponse {
+  readonly id: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly status: string;
+  readonly order: number;
+}
+
+export interface PlanResponse {
+  readonly steps: PlanStepResponse[];
+}
+
+export interface UpdateStepParams {
+  readonly status: string;
+}
+
+// ── Events (Mission) ──────────────────────────────────────────
+
+export interface LogMissionEventParams {
+  readonly type: string;
+  readonly summary: string;
+  readonly agent_id?: string;
+  readonly step_id?: string;
+  readonly payload?: Record<string, unknown>;
+}
+
+export interface MissionEventResponse {
+  readonly id: string;
+  readonly type: string;
+  readonly summary: string;
+  readonly step_id?: string;
+  readonly payload?: Record<string, unknown>;
+  readonly created_at: string;
+}
+
+export interface MissionEventListResponse {
+  readonly data: MissionEventResponse[];
+}
+
+// ── Assistant Connection ──────────────────────────────────────
+
+export interface AssistantConnectionResponse {
+  readonly connection_id: string;
+}
+
+// ── Phone Number Assignment ───────────────────────────────────
+
+export interface AssignPhoneParams {
+  readonly connection_id: string;
+  readonly type: string;
+}
+
 // ── Insights ──────────────────────────────────────────────────
 
 export interface InsightsResponse {

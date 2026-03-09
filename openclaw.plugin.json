@@ -18,7 +18,7 @@
       "server": {
         "type": "string",
         "description": "ClawTalk server URL",
-        "default": "https://clawtalk.com"
+        "default": "https://clawdtalk.com"
       },
       "ownerName": {
         "type": "string",
@@ -73,7 +73,7 @@
     },
     "server": {
       "label": "Server URL",
-      "placeholder": "https://clawtalk.com",
+      "placeholder": "https://clawdtalk.com",
       "advanced": true
     },
     "ownerName": {

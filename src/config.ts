@@ -19,7 +19,7 @@ export interface ClawTalkConfig {
   readonly enabled?: boolean;
   /** ClawTalk API key (required) */
   readonly apiKey: string;
-  /** Server URL. Default: "https://clawtalk.com" */
+  /** Server URL. Default: "https://clawdtalk.com" */
   readonly server?: string;
   /** User's name for voice greeting */
   readonly ownerName?: string;
@@ -55,7 +55,7 @@ export interface ResolvedClawTalkConfig {
   };
 }
 
-const DEFAULT_SERVER = 'https://clawtalk.com';
+const DEFAULT_SERVER = 'https://clawdtalk.com';
 const DEFAULT_AGENT_ID = 'main';
 const DEFAULT_AGENT_NAME = 'ClawTalk';
 
