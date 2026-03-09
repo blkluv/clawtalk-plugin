@@ -17,38 +17,11 @@ export class ClawTalkError extends Error {
   }
 }
 
-export class ApiError extends ClawTalkError {
-  readonly statusCode: number;
-  readonly responseBody?: string;
-
-  constructor(statusCode: number, message: string, responseBody?: string) {
-    super(`API_${statusCode}`, message, responseBody ? { responseBody } : undefined);
-    this.name = 'ApiError';
-    this.statusCode = statusCode;
-    this.responseBody = responseBody;
-  }
-
-  static unauthorized(message = 'Invalid or expired API key'): ApiError {
-    return new ApiError(401, message);
-  }
-
-  static forbidden(message = 'Insufficient permissions'): ApiError {
-    return new ApiError(403, message);
-  }
-
-  static notFound(resource: string): ApiError {
-    return new ApiError(404, `${resource} not found`);
-  }
-
-  static rateLimited(retryAfter?: number): ApiError {
-    const msg = retryAfter ? `Rate limited. Retry after ${retryAfter}s` : 'Rate limited. Try again later';
-    return new ApiError(429, msg, retryAfter !== undefined ? String(retryAfter) : undefined);
-  }
-
-  static serverError(message = 'ClawTalk server error'): ApiError {
-    return new ApiError(500, message);
-  }
-}
+/**
+ * ApiError is now provided by the SDK.
+ * Re-exported here for backwards compatibility.
+ */
+export { ApiError } from '../lib/clawtalk-sdk/errors.js';
 
 export class WebSocketError extends ClawTalkError {
   constructor(code: string, message: string, details?: Record<string, unknown>) {
@@ -116,6 +89,11 @@ export class ToolError extends ClawTalkError {
   static fromError(tool: string, err: unknown): ToolError {
     if (err instanceof ToolError) return err;
     if (err instanceof ClawTalkError) return new ToolError(tool, err.message, { code: err.code });
+    // SDK ApiError doesn't extend ClawTalkError but is still an Error
+    if (err instanceof Error && err.name === 'ApiError') {
+      const apiErr = err as import('../lib/clawtalk-sdk/errors.js').ApiError;
+      return new ToolError(tool, apiErr.message, { statusCode: apiErr.statusCode });
+    }
     const message = err instanceof Error ? err.message : String(err);
     return new ToolError(tool, message);
   }

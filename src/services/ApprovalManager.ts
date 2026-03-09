@@ -8,9 +8,9 @@
  * initialized in the constructor.
  */
 
+import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { Logger } from '../types/plugin.js';
 import type { WsApprovalResponded } from '../types/websocket.js';
-import type { ApiClient } from './ApiClient.js';
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -32,12 +32,12 @@ interface PendingApproval {
 const DEFAULT_TIMEOUT_S = 60;
 
 export class ApprovalManager {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly logger: Logger;
   private readonly pendingApprovals = new Map<string, PendingApproval>();
 
-  constructor(params: { apiClient: ApiClient; logger: Logger }) {
-    this.apiClient = params.apiClient;
+  constructor(params: { client: ClawTalkClient; logger: Logger }) {
+    this.client = params.client;
     this.logger = params.logger;
   }
 
@@ -50,7 +50,7 @@ export class ApprovalManager {
 
     this.logger.info(`Requesting approval: ${action}`);
 
-    const result = await this.apiClient.createApproval({
+    const result = await this.client.approvals.create({
       action,
       details: options?.details,
       require_biometric: options?.biometric ?? false,

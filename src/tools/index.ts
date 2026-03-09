@@ -6,7 +6,7 @@
  */
 
 import type { ResolvedClawTalkConfig } from '../config.js';
-import type { ApiClient } from '../services/ApiClient.js';
+import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { ApprovalManager } from '../services/ApprovalManager.js';
 import type { WebSocketService } from '../services/WebSocketService.js';
 import type { Logger } from '../types/plugin.js';
@@ -19,7 +19,7 @@ import { StatusTool } from './StatusTool.js';
 
 export interface ToolServices {
   readonly config: ResolvedClawTalkConfig;
-  readonly apiClient: ApiClient;
+  readonly client: ClawTalkClient;
   readonly approvalManager: ApprovalManager;
   readonly ws: WebSocketService;
   readonly logger: Logger;
@@ -44,16 +44,16 @@ export interface ClawTalkTool {
 // ── Registry ────────────────────────────────────────────────
 
 export function createTools(services: ToolServices): ClawTalkTool[] {
-  const { config, apiClient, approvalManager, ws, logger } = services;
+  const { config, client, approvalManager, ws, logger } = services;
 
   return [
-    new CallTool({ apiClient, logger }),
-    new CallStatusTool({ apiClient, logger }),
-    new SmsTool({ apiClient, logger }),
-    new SmsListTool({ apiClient, logger }),
-    new SmsConversationsTool({ apiClient, logger }),
+    new CallTool({ client, logger }),
+    new CallStatusTool({ client, logger }),
+    new SmsTool({ client, logger }),
+    new SmsListTool({ client, logger }),
+    new SmsConversationsTool({ client, logger }),
     new ApproveTool({ approvalManager, logger }),
-    new StatusTool({ config, apiClient, ws, logger }),
+    new StatusTool({ config, client, ws, logger }),
   ];
 }
 

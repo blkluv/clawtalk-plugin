@@ -7,7 +7,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { resolveConfig } from '../../src/config.js';
-import { ApiClient } from '../../src/services/ApiClient.js';
+import { ClawTalkClient } from '../../src/lib/clawtalk-sdk/index.js';
 import { WebSocketService } from '../../src/services/WebSocketService.js';
 import type { Logger } from '../../src/types/plugin.js';
 
@@ -119,30 +119,24 @@ describe.skipIf(!hasConfig)('WebSocket Integration (live server)', () => {
   });
 });
 
-describe.skipIf(!hasConfig)('API Client Integration (live server)', () => {
+describe.skipIf(!hasConfig)('ClawTalkClient Integration (live server)', () => {
   it('can list conversations (auth check)', async () => {
-    const api = new ApiClient(config!, logger);
+    const client = new ClawTalkClient({ apiKey: config!.apiKey, server: config!.server, logger });
 
     try {
-      const result = await api.listConversations();
+      const result = await client.sms.conversations();
       console.log(`  ✅ API auth works. ${result.conversations?.length ?? 0} conversations.`);
       expect(result).toBeDefined();
     } catch (err) {
-      // 401 means the endpoint exists but key format might differ
-      // Still validates our HTTP client works
       console.log(`  ⚠️  API responded with error: ${err}`);
     }
   });
 
   it('can list missions', async () => {
-    const api = new ApiClient(config!, logger);
+    const client = new ClawTalkClient({ apiKey: config!.apiKey, server: config!.server, logger });
 
-    try {
-      const missions = await api.listMissions();
-      console.log(`  ✅ ${missions.length} missions found.`);
-      expect(Array.isArray(missions)).toBe(true);
-    } catch (err) {
-      console.log(`  ⚠️  Missions API: ${err}`);
-    }
+    const missions = await client.missions.list();
+    console.log(`  ✅ ${missions.length} missions found.`);
+    expect(Array.isArray(missions)).toBe(true);
   });
 });

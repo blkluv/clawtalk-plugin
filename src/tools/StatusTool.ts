@@ -4,7 +4,7 @@
 
 import { Type } from '@sinclair/typebox';
 import type { ResolvedClawTalkConfig } from '../config.js';
-import type { ApiClient } from '../services/ApiClient.js';
+import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { WebSocketService } from '../services/WebSocketService.js';
 import type { Logger } from '../types/plugin.js';
 import type { StatusToolResult } from '../types/tools.js';
@@ -27,7 +27,7 @@ function formatResult(payload: unknown) {
 
 export class StatusTool {
   private readonly config: ResolvedClawTalkConfig;
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly ws: WebSocketService;
   private readonly logger: Logger;
 
@@ -39,12 +39,12 @@ export class StatusTool {
 
   constructor(params: {
     config: ResolvedClawTalkConfig;
-    apiClient: ApiClient;
+    client: ClawTalkClient;
     ws: WebSocketService;
     logger: Logger;
   }) {
     this.config = params.config;
-    this.apiClient = params.apiClient;
+    this.client = params.client;
     this.ws = params.ws;
     this.logger = params.logger;
   }
@@ -56,8 +56,8 @@ export class StatusTool {
       // Try to get authenticated user info
       let userName: string | undefined;
       try {
-        const me = await this.apiClient.getMe();
-        userName = me.name ?? me.email;
+        const me = await this.client.user.me();
+        userName = me.email;
       } catch {
         // API key might be invalid, still report other status
       }

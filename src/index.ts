@@ -22,7 +22,7 @@ const clawTalkPlugin = {
 
     api.logger.info(`ClawTalk plugin loaded (server: ${config.server})`);
 
-    // Phase 2: ApiClient + WebSocketService instantiation happens here in Phase 6
+    // Phase 4B: ClawTalkClient + WebSocketService instantiation happens here in Phase 6
     // Phase 3: Event handlers
     // Phase 4: Agent tools registration
     // Phase 5: Mission tools registration

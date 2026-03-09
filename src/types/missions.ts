@@ -139,4 +139,4 @@ export interface LogEventParams {
 
 // ── Assistant Types (re-exported from api for convenience) ────
 
-export type { AssistantResponse, InsightsResponse } from './api.js';
+export type { AssistantResponse, InsightsResponse } from '../lib/clawtalk-sdk/types.js';

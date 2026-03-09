@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ApprovalManager } from '../../src/services/ApprovalManager.js';
-import type { ApiClient } from '../../src/services/ApiClient.js';
+import type { ClawTalkClient } from '../../src/lib/clawtalk-sdk/index.js';
 import type { Logger } from '../../src/types/plugin.js';
 import type { WsApprovalResponded } from '../../src/types/websocket.js';
 
@@ -18,15 +18,17 @@ function createMockLogger(): Logger {
   };
 }
 
-function createMockApiClient(overrides?: Partial<{ devices_notified: number; devices_failed: number }>): ApiClient {
+function createMockClient(overrides?: Partial<{ devices_notified: number; devices_failed: number }>): ClawTalkClient {
   return {
-    createApproval: vi.fn().mockResolvedValue({
-      request_id: 'req_123',
-      status: 'pending',
-      devices_notified: overrides?.devices_notified ?? 1,
-      devices_failed: overrides?.devices_failed ?? 0,
-    }),
-  } as unknown as ApiClient;
+    approvals: {
+      create: vi.fn().mockResolvedValue({
+        request_id: 'req_123',
+        status: 'pending',
+        devices_notified: overrides?.devices_notified ?? 1,
+        devices_failed: overrides?.devices_failed ?? 0,
+      }),
+    },
+  } as unknown as ClawTalkClient;
 }
 
 function wsResponse(requestId: string, decision: WsApprovalResponded['decision']): WsApprovalResponded {
@@ -37,14 +39,14 @@ function wsResponse(requestId: string, decision: WsApprovalResponded['decision']
 
 describe('ApprovalManager', () => {
   let manager: ApprovalManager;
-  let apiClient: ApiClient;
+  let client: ClawTalkClient;
   let logger: Logger;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    apiClient = createMockApiClient();
+    client = createMockClient();
     logger = createMockLogger();
-    manager = new ApprovalManager({ apiClient, logger });
+    manager = new ApprovalManager({ client, logger });
   });
 
   afterEach(() => {
@@ -54,7 +56,7 @@ describe('ApprovalManager', () => {
 
   it('resolves with "approved" when WS response arrives', async () => {
     const promise = manager.requestApproval('Delete repo');
-    await tick(); // let createApproval resolve + waitForDecision register
+    await tick();
 
     manager.handleWebSocketResponse(wsResponse('req_123', 'approved'));
 
@@ -80,16 +82,16 @@ describe('ApprovalManager', () => {
   });
 
   it('returns "no_devices" when devices_notified is 0 and no failures', async () => {
-    apiClient = createMockApiClient({ devices_notified: 0, devices_failed: 0 });
-    manager = new ApprovalManager({ apiClient, logger });
+    client = createMockClient({ devices_notified: 0, devices_failed: 0 });
+    manager = new ApprovalManager({ client, logger });
 
     const result = await manager.requestApproval('Test action');
     expect(result).toBe('no_devices');
   });
 
   it('returns "no_devices_reached" when devices_notified is 0 but devices_failed > 0', async () => {
-    apiClient = createMockApiClient({ devices_notified: 0, devices_failed: 2 });
-    manager = new ApprovalManager({ apiClient, logger });
+    client = createMockClient({ devices_notified: 0, devices_failed: 2 });
+    manager = new ApprovalManager({ client, logger });
 
     const result = await manager.requestApproval('Test action');
     expect(result).toBe('no_devices_reached');
@@ -107,7 +109,6 @@ describe('ApprovalManager', () => {
     manager.handleWebSocketResponse(wsResponse('req_123', 'approved'));
     await promise;
 
-    // Second response for same ID — should not throw
     manager.handleWebSocketResponse(wsResponse('req_123', 'denied'));
     expect(manager.pendingCount).toBe(0);
   });
@@ -116,7 +117,7 @@ describe('ApprovalManager', () => {
     const promise1 = manager.requestApproval('Action 1');
     await tick();
 
-    (apiClient.createApproval as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    (client.approvals.create as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       request_id: 'req_456',
       status: 'pending',
       devices_notified: 1,
@@ -135,7 +136,7 @@ describe('ApprovalManager', () => {
     expect(manager.pendingCount).toBe(0);
   });
 
-  it('calls apiClient.createApproval with correct params', async () => {
+  it('calls client.approvals.create with correct params', async () => {
     const promise = manager.requestApproval('Deploy to prod', {
       details: 'Deploying v2.0',
       biometric: true,
@@ -146,7 +147,7 @@ describe('ApprovalManager', () => {
     manager.handleWebSocketResponse(wsResponse('req_123', 'approved'));
     await promise;
 
-    expect(apiClient.createApproval).toHaveBeenCalledWith({
+    expect(client.approvals.create).toHaveBeenCalledWith({
       action: 'Deploy to prod',
       details: 'Deploying v2.0',
       require_biometric: true,

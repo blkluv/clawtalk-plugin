@@ -1,7 +1,23 @@
 /**
- * Re-export from SDK. All API types now live in the SDK.
- * @deprecated Import from '../lib/clawtalk-sdk/index.js' instead.
+ * ClawTalk SDK — public API surface.
+ *
+ * Usage:
+ *   import { ClawTalkClient, ApiError } from './lib/clawtalk-sdk/index.js';
  */
+
+export type { ClawTalkClientConfig } from './client.js';
+export { ClawTalkClient } from './client.js';
+export type { Endpoint, HttpMethod } from './endpoints.js';
+export {
+  ENDPOINTS,
+  IMPLEMENTED_ENDPOINTS,
+  READ_ENDPOINTS,
+  resolve,
+  UNIMPLEMENTED_ENDPOINTS,
+} from './endpoints.js';
+export { ApiError } from './errors.js';
+
+// Re-export all API types
 export type {
   ApprovalResponse,
   ApprovalStatusResponse,
@@ -48,4 +64,4 @@ export type {
   SmsResponse,
   UpdateStepParams,
   UserMeResponse,
-} from '../lib/clawtalk-sdk/types.js';
+} from './types.js';

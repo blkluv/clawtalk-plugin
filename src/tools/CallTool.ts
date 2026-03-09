@@ -4,7 +4,7 @@
  */
 
 import { Type } from '@sinclair/typebox';
-import type { ApiClient } from '../services/ApiClient.js';
+import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { Logger } from '../types/plugin.js';
 import type { CallStatusToolParams, CallStatusToolResult, CallToolParams, CallToolResult } from '../types/tools.js';
 import { ToolError } from '../utils/errors.js';
@@ -39,7 +39,7 @@ function formatResult(payload: unknown) {
 // ── CallTool ────────────────────────────────────────────────
 
 export class CallTool {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly logger: Logger;
 
   readonly name = 'clawtalk_call';
@@ -48,8 +48,8 @@ export class CallTool {
     'Initiate an outbound phone call via ClawTalk. The call connects to the ClawTalk voice AI which can have a conversation with the recipient.';
   readonly parameters = CallToolSchema;
 
-  constructor(params: { apiClient: ApiClient; logger: Logger }) {
-    this.apiClient = params.apiClient;
+  constructor(params: { client: ClawTalkClient; logger: Logger }) {
+    this.client = params.client;
     this.logger = params.logger;
   }
 
@@ -58,7 +58,7 @@ export class CallTool {
     this.logger.info(`Initiating call to ${params.to}`);
 
     try {
-      const result = await this.apiClient.initiateCall({
+      const result = await this.client.calls.initiate({
         to: params.to,
         greeting: params.greeting,
         purpose: params.purpose,
@@ -82,7 +82,7 @@ export class CallTool {
 // ── CallStatusTool ──────────────────────────────────────────
 
 export class CallStatusTool {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly logger: Logger;
 
   readonly name = 'clawtalk_call_status';
@@ -90,8 +90,8 @@ export class CallStatusTool {
   readonly description = 'Check the status of an active call or end it. Use action "end" to hang up.';
   readonly parameters = CallStatusToolSchema;
 
-  constructor(params: { apiClient: ApiClient; logger: Logger }) {
-    this.apiClient = params.apiClient;
+  constructor(params: { client: ClawTalkClient; logger: Logger }) {
+    this.client = params.client;
     this.logger = params.logger;
   }
 
@@ -102,7 +102,7 @@ export class CallStatusTool {
     try {
       if (action === 'end') {
         this.logger.info(`Ending call ${params.callId}`);
-        await this.apiClient.endCall(params.callId);
+        await this.client.calls.end(params.callId);
 
         const payload: CallStatusToolResult = {
           callId: params.callId,
@@ -113,7 +113,7 @@ export class CallStatusTool {
       }
 
       this.logger.info(`Checking status of call ${params.callId}`);
-      const result = await this.apiClient.getCallStatus(params.callId);
+      const result = await this.client.calls.status(params.callId);
 
       const payload: CallStatusToolResult = {
         callId: params.callId,

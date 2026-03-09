@@ -5,7 +5,7 @@
  */
 
 import { Type } from '@sinclair/typebox';
-import type { ApiClient } from '../services/ApiClient.js';
+import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { Logger } from '../types/plugin.js';
 import type {
   SmsConversationsToolResult,
@@ -49,7 +49,7 @@ function formatResult(payload: unknown) {
 // ── SmsTool ─────────────────────────────────────────────────
 
 export class SmsTool {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly logger: Logger;
 
   readonly name = 'clawtalk_sms';
@@ -57,8 +57,8 @@ export class SmsTool {
   readonly description = 'Send an SMS (or MMS with media) to a phone number via ClawTalk.';
   readonly parameters = SmsToolSchema;
 
-  constructor(params: { apiClient: ApiClient; logger: Logger }) {
-    this.apiClient = params.apiClient;
+  constructor(params: { client: ClawTalkClient; logger: Logger }) {
+    this.client = params.client;
     this.logger = params.logger;
   }
 
@@ -67,7 +67,7 @@ export class SmsTool {
     this.logger.info(`Sending SMS to ${params.to}`);
 
     try {
-      const result = await this.apiClient.sendSms({
+      const result = await this.client.sms.send({
         to: params.to,
         message: params.message,
         media_urls: params.mediaUrls,
@@ -90,7 +90,7 @@ export class SmsTool {
 // ── SmsListTool ─────────────────────────────────────────────
 
 export class SmsListTool {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly logger: Logger;
 
   readonly name = 'clawtalk_sms_list';
@@ -98,8 +98,8 @@ export class SmsListTool {
   readonly description = 'List recent SMS messages. Optionally filter by contact or direction.';
   readonly parameters = SmsListToolSchema;
 
-  constructor(params: { apiClient: ApiClient; logger: Logger }) {
-    this.apiClient = params.apiClient;
+  constructor(params: { client: ClawTalkClient; logger: Logger }) {
+    this.client = params.client;
     this.logger = params.logger;
   }
 
@@ -108,7 +108,7 @@ export class SmsListTool {
     this.logger.info('Listing SMS messages');
 
     try {
-      const result = await this.apiClient.listMessages({
+      const result = await this.client.sms.list({
         limit: params.limit,
         contact: params.contact,
         direction: params.direction,
@@ -137,7 +137,7 @@ export class SmsListTool {
 // ── SmsConversationsTool ────────────────────────────────────
 
 export class SmsConversationsTool {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly logger: Logger;
 
   readonly name = 'clawtalk_sms_conversations';
@@ -145,8 +145,8 @@ export class SmsConversationsTool {
   readonly description = 'List all SMS conversations with recent activity.';
   readonly parameters = SmsConversationsToolSchema;
 
-  constructor(params: { apiClient: ApiClient; logger: Logger }) {
-    this.apiClient = params.apiClient;
+  constructor(params: { client: ClawTalkClient; logger: Logger }) {
+    this.client = params.client;
     this.logger = params.logger;
   }
 
@@ -154,7 +154,7 @@ export class SmsConversationsTool {
     this.logger.info('Listing SMS conversations');
 
     try {
-      const result = await this.apiClient.listConversations();
+      const result = await this.client.sms.conversations();
 
       const conversations = (result.conversations ?? []).map((c) => ({
         contact: formatPhoneNumber(c.contact),

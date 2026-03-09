@@ -6,9 +6,9 @@
  * agent's reply back via the ClawTalk API.
  */
 
+import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { Logger } from '../types/plugin.js';
 import type { WsSmsReceived } from '../types/websocket.js';
-import type { ApiClient } from './ApiClient.js';
 import type { ICoreBridge } from './CoreBridge.js';
 
 const SMS_TIMEOUT_MS = 60_000;
@@ -24,16 +24,16 @@ function maskPhone(phone: string): string {
 }
 
 export class SmsHandler {
-  private readonly apiClient: ApiClient;
+  private readonly client: ClawTalkClient;
   private readonly coreBridge: ICoreBridge;
   private readonly logger: Logger;
 
   constructor(params: {
-    apiClient: ApiClient;
+    client: ClawTalkClient;
     coreBridge: ICoreBridge;
     logger: Logger;
   }) {
-    this.apiClient = params.apiClient;
+    this.client = params.client;
     this.coreBridge = params.coreBridge;
     this.logger = params.logger;
   }
@@ -65,7 +65,7 @@ export class SmsHandler {
 
       this.logger.info(`SMS reply: ${truncated.substring(0, 50)}...`);
 
-      await this.apiClient.sendSms({ to: from, message: truncated });
+      await this.client.sms.send({ to: from, message: truncated });
       this.logger.info(`SMS reply sent to ${maskPhone(from)}`);
     } catch (err) {
       if (err instanceof Error && (err.message.includes('timeout') || err.message.includes('abort'))) {
