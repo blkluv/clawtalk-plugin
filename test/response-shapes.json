@@ -1,0 +1,474 @@
+{
+  "POST /v1/missions": {
+    "status": 201,
+    "body": {
+      "mission": {
+        "id": "1fa2ec3c-6fd5-4695-b3c6-9ad45db492ff",
+        "user_id": "0d392bc9-1f18-43a8-bb7f-37ef643473c5",
+        "telnyx_mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "telnyx_run_id": "78157e70-e413-4c9f-b934-783ea0fc76bc",
+        "name": "Shape Test Mission",
+        "instructions": "Test mission for capturing response shapes",
+        "status": "pending",
+        "channel": "voice",
+        "target_count": 0,
+        "events_used": 0,
+        "assistant_id": null,
+        "assistant_phone": null,
+        "metadata": {},
+        "created_at": "2026-03-09T16:39:24.997Z",
+        "updated_at": "2026-03-09T16:39:24.997Z",
+        "result_summary": null,
+        "result_payload": null
+      }
+    }
+  },
+  "GET /v1/missions/:id": {
+    "status": 200,
+    "body": {
+      "mission": {
+        "id": "1fa2ec3c-6fd5-4695-b3c6-9ad45db492ff",
+        "name": "Shape Test Mission",
+        "instructions": "Test mission for capturing response shapes",
+        "status": "pending",
+        "channel": "voice",
+        "target_count": 0,
+        "events_used": 0,
+        "assistant_id": null,
+        "assistant_phone": null,
+        "telnyx_mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "telnyx_run_id": "78157e70-e413-4c9f-b934-783ea0fc76bc",
+        "metadata": {},
+        "result_summary": null,
+        "result_payload": null,
+        "created_at": "2026-03-09T16:39:24.997Z",
+        "updated_at": "2026-03-09T16:39:24.997Z",
+        "assistant": null,
+        "linked_agents": [],
+        "plan": {
+          "steps": []
+        }
+      }
+    }
+  },
+  "GET /v1/missions": {
+    "status": 200,
+    "body": {
+      "missions": [
+        {
+          "id": "1fa2ec3c-6fd5-4695-b3c6-9ad45db492ff",
+          "user_id": "0d392bc9-1f18-43a8-bb7f-37ef643473c5",
+          "telnyx_mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+          "telnyx_run_id": "78157e70-e413-4c9f-b934-783ea0fc76bc",
+          "name": "Shape Test Mission",
+          "instructions": "Test mission for capturing response shapes",
+          "status": "pending",
+          "channel": "voice",
+          "target_count": 0,
+          "events_used": 0,
+          "assistant_id": null,
+          "assistant_phone": null,
+          "metadata": {},
+          "created_at": "2026-03-09T16:39:24.997Z",
+          "updated_at": "2026-03-09T16:39:24.997Z",
+          "result_summary": null,
+          "result_payload": null,
+          "computed_target_count": "0",
+          "computed_event_count": "0",
+          "computed_scheduled_count": "0"
+        }
+      ]
+    }
+  },
+  "POST /v1/missions/:id/runs": {
+    "status": 201,
+    "body": {
+      "data": {
+        "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+        "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+        "status": "pending",
+        "input": {
+          "original_request": "Test request for shape capture"
+        },
+        "started_at": "2026-03-09T16:39:27.132341Z",
+        "finished_at": null,
+        "result_summary": null,
+        "result_payload": null,
+        "error": null,
+        "metadata": null,
+        "updated_at": "2026-03-09T16:39:27.132341Z"
+      }
+    }
+  },
+  "GET /v1/missions/:id/runs/:id": {
+    "status": 200,
+    "body": {
+      "data": {
+        "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+        "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+        "status": "pending",
+        "input": {
+          "original_request": "Test request for shape capture"
+        },
+        "started_at": "2026-03-09T16:39:27.132341Z",
+        "finished_at": null,
+        "result_summary": null,
+        "result_payload": null,
+        "error": null,
+        "metadata": null,
+        "updated_at": "2026-03-09T16:39:27.132341Z"
+      }
+    }
+  },
+  "GET /v1/missions/:id/runs": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+          "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+          "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+          "status": "pending",
+          "input": {
+            "original_request": "Test request for shape capture"
+          },
+          "started_at": "2026-03-09T16:39:27.132341Z",
+          "finished_at": null,
+          "result_summary": null,
+          "result_payload": null,
+          "error": null,
+          "metadata": null,
+          "updated_at": "2026-03-09T16:39:27.132341Z"
+        },
+        {
+          "run_id": "78157e70-e413-4c9f-b934-783ea0fc76bc",
+          "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+          "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+          "status": "pending",
+          "input": {
+            "channel": "voice",
+            "targets": [],
+            "metadata": {},
+            "original_request": "Test mission for capturing response shapes"
+          },
+          "started_at": "2026-03-09T16:39:24.224923Z",
+          "finished_at": null,
+          "result_summary": null,
+          "result_payload": null,
+          "error": null,
+          "metadata": null,
+          "updated_at": "2026-03-09T16:39:25.539839Z"
+        }
+      ],
+      "meta": {
+        "total_pages": 1,
+        "total_results": 2,
+        "page_number": 1,
+        "page_size": 20
+      }
+    }
+  },
+  "POST /v1/missions/:id/runs/:id/plan": {
+    "status": 500,
+    "body": {
+      "error": {
+        "code": "internal",
+        "message": "Telnyx API error (400): {\n  \"errors\": [\n    {\n      \"code\": \"10004\",\n      \"title\": \"Missing required parameter\",\n      \"detail\": \"A required parameter was missing.\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10004\"\n      },\n      \"source\": {\n        \"pointer\": \"/body/steps[0]/step_id\"\n      }\n    },\n    {\n      \"code\": \"10004\",\n      \"title\": \"Missing required parameter\",\n      \"detail\": \"A required parameter was missing.\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10004\"\n      },\n      \"source\": {\n        \"pointer\": \"/body/steps[0]/sequence\"\n      }\n    },\n    {\n      \"code\": \"10004\",\n      \"title\": \"Missing required parameter\",\n      \"detail\": \"A required parameter was missing.\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10004\"\n      },\n      \"source\": {\n        \"pointer\": \"/body/steps[1]/step_id\"\n      }\n    },\n    {\n      \"code\": \"10004\",\n      \"title\": \"Missing required parameter\",\n      \"detail\": \"A required parameter was missing.\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10004\"\n      },\n      \"source\": {\n        \"pointer\": \"/body/steps[1]/sequence\"\n      }\n    }\n  ]\n}"
+      }
+    }
+  },
+  "GET /v1/missions/:id/runs/:id/plan": {
+    "status": 200,
+    "body": {
+      "data": []
+    }
+  },
+  "PATCH /v1/missions/:id/runs/:id (running)": {
+    "status": 200,
+    "body": {
+      "data": {
+        "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+        "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+        "status": "running",
+        "input": {
+          "original_request": "Test request for shape capture"
+        },
+        "started_at": "2026-03-09T16:39:27.132341Z",
+        "finished_at": null,
+        "result_summary": null,
+        "result_payload": null,
+        "error": null,
+        "metadata": null,
+        "updated_at": "2026-03-09T16:39:27.132341Z"
+      }
+    }
+  },
+  "POST /v1/missions/:id/runs/:id/events": {
+    "status": 500,
+    "body": {
+      "error": {
+        "code": "internal",
+        "message": "Telnyx API error (400): {\n  \"errors\": [\n    {\n      \"code\": \"10015\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The request failed because it was not well-formed.\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10015\"\n      }\n    }\n  ]\n}"
+      }
+    }
+  },
+  "GET /v1/missions/:id/runs/:id/events": {
+    "status": 200,
+    "body": {
+      "data": [],
+      "meta": {
+        "total_pages": 0,
+        "total_results": 0,
+        "page_number": 1,
+        "page_size": 50
+      }
+    }
+  },
+  "POST /v1/assistants": {
+    "status": 201,
+    "body": {
+      "assistant": {
+        "id": "e852e7a0-e59a-4c7f-af5e-ae31d940e271",
+        "user_id": "0d392bc9-1f18-43a8-bb7f-37ef643473c5",
+        "telnyx_assistant_id": "assistant-8480c12f-1c3a-4147-8811-480bd9f85bf5",
+        "name": "Shape Test Agent",
+        "description": null,
+        "model": "openai/gpt-4o",
+        "enabled_features": [
+          "telephony",
+          "messaging"
+        ],
+        "phone_number": null,
+        "phone_number_id": null,
+        "connection_id": null,
+        "config": {
+          "name": "Shape Test Agent",
+          "model": "openai/gpt-4o",
+          "tools": [
+            {
+              "type": "hangup",
+              "hangup": {
+                "description": "End call"
+              }
+            }
+          ],
+          "greeting": "",
+          "instructions": "Test assistant for shape capture",
+          "enabled_features": [
+            "telephony",
+            "messaging"
+          ]
+        },
+        "created_at": "2026-03-09T16:39:33.862Z",
+        "updated_at": "2026-03-09T16:39:33.862Z"
+      }
+    }
+  },
+  "GET /v1/assistants/:id": {
+    "status": 200,
+    "body": {
+      "assistant": {
+        "id": "e852e7a0-e59a-4c7f-af5e-ae31d940e271",
+        "user_id": "0d392bc9-1f18-43a8-bb7f-37ef643473c5",
+        "telnyx_assistant_id": "assistant-8480c12f-1c3a-4147-8811-480bd9f85bf5",
+        "name": "Shape Test Agent",
+        "description": null,
+        "model": "openai/gpt-4o",
+        "enabled_features": [
+          "telephony",
+          "messaging"
+        ],
+        "phone_number": null,
+        "phone_number_id": null,
+        "connection_id": null,
+        "config": {
+          "name": "Shape Test Agent",
+          "model": "openai/gpt-4o",
+          "tools": [
+            {
+              "type": "hangup",
+              "hangup": {
+                "description": "End call"
+              }
+            }
+          ],
+          "greeting": "",
+          "instructions": "Test assistant for shape capture",
+          "enabled_features": [
+            "telephony",
+            "messaging"
+          ]
+        },
+        "created_at": "2026-03-09T16:39:33.862Z",
+        "updated_at": "2026-03-09T16:39:33.862Z"
+      }
+    }
+  },
+  "GET /v1/assistants": {
+    "status": 200,
+    "body": {
+      "assistants": [
+        {
+          "id": "e852e7a0-e59a-4c7f-af5e-ae31d940e271",
+          "user_id": "0d392bc9-1f18-43a8-bb7f-37ef643473c5",
+          "telnyx_assistant_id": "assistant-8480c12f-1c3a-4147-8811-480bd9f85bf5",
+          "name": "Shape Test Agent",
+          "description": null,
+          "model": "openai/gpt-4o",
+          "enabled_features": [
+            "telephony",
+            "messaging"
+          ],
+          "phone_number": null,
+          "phone_number_id": null,
+          "connection_id": null,
+          "config": {
+            "name": "Shape Test Agent",
+            "model": "openai/gpt-4o",
+            "tools": [
+              {
+                "type": "hangup",
+                "hangup": {
+                  "description": "End call"
+                }
+              }
+            ],
+            "greeting": "",
+            "instructions": "Test assistant for shape capture",
+            "enabled_features": [
+              "telephony",
+              "messaging"
+            ]
+          },
+          "created_at": "2026-03-09T16:39:33.862Z",
+          "updated_at": "2026-03-09T16:39:33.862Z"
+        }
+      ]
+    }
+  },
+  "GET /v1/assistants/:id/connection-id": {
+    "status": 200,
+    "body": {
+      "connection_id": "2911927193066014629"
+    }
+  },
+  "POST /v1/missions/:id/runs/:id/agents": {
+    "status": 201,
+    "body": {
+      "data": {
+        "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+        "telnyx_agent_id": "assistant-8480c12f-1c3a-4147-8811-480bd9f85bf5",
+        "created_at": "2026-03-09T16:39:35.086454Z"
+      }
+    }
+  },
+  "GET /v1/missions/:id/runs/:id/agents": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+          "telnyx_agent_id": "assistant-8480c12f-1c3a-4147-8811-480bd9f85bf5",
+          "created_at": "2026-03-09T16:39:35.086454Z"
+        }
+      ]
+    }
+  },
+  "POST /v1/assistants/:id/events (call)": {
+    "status": 500,
+    "body": {
+      "error": {
+        "code": "internal",
+        "message": "Telnyx schedule call failed (400): {\n  \"errors\": [\n    {\n      \"code\": \"10015\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"telnyx_agent_target +15559876543 does not belong to this assistant\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10015\"\n      }\n    }\n  ]\n}"
+      }
+    }
+  },
+  "POST /v1/assistants/:id/events (sms)": {
+    "status": 500,
+    "body": {
+      "error": {
+        "code": "internal",
+        "message": "Telnyx schedule SMS failed (400): {\n  \"errors\": [\n    {\n      \"code\": \"10015\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"telnyx_agent_target +15559876543 does not belong to this assistant\",\n      \"meta\": {\n        \"url\": \"https://developers.telnyx.com/docs/overview/errors/10015\"\n      }\n    }\n  ]\n}"
+      }
+    }
+  },
+  "GET /v1/assistants/:id/events": {
+    "status": 200,
+    "body": {
+      "events": []
+    }
+  },
+  "GET /v1/numbers/account-phones/available": {
+    "status": 200,
+    "body": {
+      "phone": {
+        "id": "2911183098009880238",
+        "phone_number": "+16469048833",
+        "status": "active",
+        "ordered_at": "2026-03-08T16:01:14.046Z"
+      }
+    }
+  },
+  "GET /v1/numbers/account-phones": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "id": "2911183098009880238",
+          "phone_number": "+16469048833",
+          "status": "active",
+          "ordered_at": "2026-03-08T16:01:14.046Z"
+        }
+      ]
+    }
+  },
+  "PATCH /v1/missions/:id/runs/:id (succeeded)": {
+    "status": 200,
+    "body": {
+      "data": {
+        "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+        "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+        "status": "succeeded",
+        "input": {
+          "original_request": "Test request for shape capture"
+        },
+        "started_at": "2026-03-09T16:39:27.132341Z",
+        "finished_at": "2026-03-09T16:39:41.735355Z",
+        "result_summary": "Shape test completed",
+        "result_payload": {
+          "shapes_captured": true
+        },
+        "error": null,
+        "metadata": null,
+        "updated_at": "2026-03-09T16:39:27.132341Z"
+      }
+    }
+  },
+  "GET /v1/missions/:id/runs/:id (completed)": {
+    "status": 200,
+    "body": {
+      "data": {
+        "run_id": "6c252231-7502-4001-a3fd-ffa02bcc6b6d",
+        "mission_id": "312d38a9-634e-4b48-8f62-022b824730aa",
+        "organization_id": "eb7d1ed0-b950-4ae1-8e6c-ed542ef99880",
+        "status": "succeeded",
+        "input": {
+          "original_request": "Test request for shape capture"
+        },
+        "started_at": "2026-03-09T16:39:27.132341Z",
+        "finished_at": "2026-03-09T16:39:41.735355Z",
+        "result_summary": "Shape test completed",
+        "result_payload": {
+          "shapes_captured": true
+        },
+        "error": null,
+        "metadata": null,
+        "updated_at": "2026-03-09T16:39:27.132341Z"
+      }
+    }
+  }
+}

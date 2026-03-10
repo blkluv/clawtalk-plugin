@@ -1,0 +1,11 @@
+import { ENDPOINTS } from '../endpoints.js';
+import type { UserMeResponse } from '../types.js';
+import type { RequestFn } from './calls.js';
+
+export class UserNamespace {
+  constructor(private readonly request: RequestFn) {}
+
+  async me(): Promise<UserMeResponse> {
+    return this.request<UserMeResponse>('GET', ENDPOINTS.getMe.path);
+  }
+}
