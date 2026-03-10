@@ -22,11 +22,13 @@ import type {
   WsEvent,
   WsInboundMessage,
   WsOutboundMessage,
+  WsRequestLogs,
   WsSmsReceived,
   WsWalkieRequest,
 } from '../types/websocket.js';
 import { WebSocketError } from '../utils/errors.js';
 import { type EventMap, TypedEmitter } from '../utils/typed-emitter.js';
+import type { WsLogger } from '../utils/ws-logger.js';
 
 // ── Constants ───────────────────────────────────────────────
 
@@ -46,6 +48,7 @@ export interface WebSocketEvents extends EventMap {
   'sms.received': (msg: WsSmsReceived) => void;
   'approval.responded': (msg: WsApprovalResponded) => void;
   walkie_request: (msg: WsWalkieRequest) => void;
+  request_logs: (requestId: string) => void;
   connected: () => void;
   disconnected: (code: number, reason: string) => void;
   error: (err: Error) => void;
@@ -53,7 +56,7 @@ export interface WebSocketEvents extends EventMap {
 
 // ── Read package version ────────────────────────────────────
 
-function readPackageVersion(): string {
+export function readPackageVersion(): string {
   try {
     const pkgPath = resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json');
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
@@ -68,6 +71,7 @@ function readPackageVersion(): string {
 export class WebSocketService extends TypedEmitter<WebSocketEvents> {
   private readonly config: ResolvedClawTalkConfig;
   private readonly logger: Logger;
+  private readonly wsLog: WsLogger | null;
   private readonly clientVersion: string;
 
   private ws: WebSocket | null = null;
@@ -84,10 +88,11 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
   private lastPingAt: Date | null = null;
   private lastPongAt: Date | null = null;
 
-  constructor(config: ResolvedClawTalkConfig, logger: Logger) {
+  constructor(config: ResolvedClawTalkConfig, logger: Logger, wsLog?: WsLogger) {
     super();
     this.config = config;
     this.logger = logger;
+    this.wsLog = wsLog ?? null;
     this.clientVersion = readPackageVersion();
   }
 
@@ -141,6 +146,7 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
     }
 
     try {
+      this.wsLog?.outbound(message);
       this.ws.send(JSON.stringify(message));
     } catch (err) {
       throw WebSocketError.sendFailed(String(err));
@@ -167,6 +173,7 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
 
       this.ws.on('open', () => {
         this.logger.info('ClawTalk connected, authenticating...');
+        this.wsLog?.lifecycle('connected', wsUrl);
         this.sendAuth();
       });
 
@@ -195,12 +202,15 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
 
         if (msg.type === 'event') {
           this.dispatchEvent(msg as WsEvent);
+        } else if (msg.type === 'request_logs') {
+          this.emit('request_logs', (msg as WsRequestLogs).request_id);
         }
       });
 
       this.ws.on('close', (code: number, reason: Buffer) => {
         const reasonStr = reason.toString() || 'unknown';
         this.logger.info(`ClawTalk disconnected: code=${code} reason=${reasonStr}`);
+        this.wsLog?.lifecycle('disconnected', `code=${code} reason=${reasonStr}`);
 
         this.authenticated = false;
         this.clearTimers();
@@ -225,6 +235,7 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
 
       this.ws.on('error', (err: Error) => {
         this.logger.error?.(`ClawTalk WebSocket error: ${err.message}`);
+        this.wsLog?.lifecycle('error', err.message);
 
         // If we haven't settled the promise yet (e.g. server returned 502/404
         // before 'open' fires), reject so the caller can handle it gracefully
@@ -264,6 +275,7 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
     this.currentReconnectDelay = RECONNECT_MIN_MS;
 
     this.logger.info(`ClawTalk authenticated (v${this.clientVersion})`);
+    this.wsLog?.lifecycle('authenticated', `v${this.clientVersion}`);
     this.startPing();
 
     // Send restart notification on reconnect (not first connect)
@@ -346,7 +358,9 @@ export class WebSocketService extends TypedEmitter<WebSocketEvents> {
 
   private parseMessage(data: WebSocket.Data): WsInboundMessage | null {
     try {
-      return JSON.parse(data.toString()) as WsInboundMessage;
+      const msg = JSON.parse(data.toString()) as WsInboundMessage;
+      this.wsLog?.inbound(msg);
+      return msg;
     } catch {
       this.logger.warn?.('Failed to parse WebSocket message');
       return null;

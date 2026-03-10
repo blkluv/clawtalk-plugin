@@ -24,6 +24,7 @@ import { UserNamespace } from './namespaces/user.js';
 export interface ClawTalkClientConfig {
   readonly apiKey: string;
   readonly server: string;
+  readonly clientVersion?: string;
   readonly logger?: {
     debug?: (...args: unknown[]) => void;
     warn?: (...args: unknown[]) => void;
@@ -52,6 +53,7 @@ export class ClawTalkClient {
     this.headers = {
       Authorization: `Bearer ${config.apiKey}`,
       'Content-Type': 'application/json',
+      ...(config.clientVersion ? { 'X-Client-Version': config.clientVersion } : {}),
     };
     this.logger = config.logger;
     this.timeoutMs = config.timeoutMs ?? 30000;

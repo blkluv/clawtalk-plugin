@@ -10,6 +10,7 @@ import path from 'node:path';
 import type { ClawTalkClient } from '../lib/clawtalk-sdk/index.js';
 import type { DoctorCheckResult } from '../lib/clawtalk-sdk/namespaces/doctor.js';
 import type { Logger } from '../types/plugin.js';
+import type { ICoreBridge } from './CoreBridge.js';
 import type { WebSocketService } from './WebSocketService.js';
 
 // ── Types ───────────────────────────────────────────────────
@@ -36,15 +37,18 @@ export interface DoctorReport {
 export class DoctorService {
   private readonly client: ClawTalkClient;
   private readonly ws: WebSocketService;
+  private readonly coreBridge: ICoreBridge | null;
   private readonly logger: Logger;
 
   constructor(deps: {
     client: ClawTalkClient;
     ws: WebSocketService;
+    coreBridge?: ICoreBridge;
     logger: Logger;
   }) {
     this.client = deps.client;
     this.ws = deps.ws;
+    this.coreBridge = deps.coreBridge ?? null;
     this.logger = deps.logger;
   }
 
@@ -71,6 +75,10 @@ export class DoctorService {
     // 3. Client version
     const versionCheck = this.checkClientVersion();
     checks.push(versionCheck);
+
+    // 4. Deep tool ping/pong (CoreBridge agent roundtrip)
+    const deepToolCheck = await this.checkDeepToolPingPong();
+    checks.push(deepToolCheck);
 
     return checks;
   }
@@ -148,5 +156,45 @@ export class DoctorService {
       detail: `Client version: ${version}`,
       source: 'local',
     };
+  }
+
+  private async checkDeepToolPingPong(): Promise<DoctorCheck> {
+    if (!this.coreBridge) {
+      return {
+        id: 'deep_tool_ping',
+        status: 'warn',
+        detail: 'CoreBridge not available, cannot test deep tool roundtrip',
+        source: 'local',
+      };
+    }
+
+    const startMs = Date.now();
+    try {
+      const result = await this.coreBridge.runAgentTurn({
+        sessionKey: 'clawtalk:doctor:ping',
+        prompt: 'Respond with exactly: pong',
+        timeoutMs: 15000,
+      });
+
+      const latencyMs = Date.now() - startMs;
+      const gotResponse = result !== null && result.trim().length > 0;
+
+      return {
+        id: 'deep_tool_ping',
+        status: gotResponse ? 'pass' : 'fail',
+        detail: gotResponse
+          ? `Deep tool roundtrip OK (${latencyMs}ms)`
+          : `Deep tool returned empty response (${latencyMs}ms)`,
+        source: 'local',
+      };
+    } catch (err) {
+      const latencyMs = Date.now() - startMs;
+      return {
+        id: 'deep_tool_ping',
+        status: 'fail',
+        detail: `Deep tool roundtrip failed (${latencyMs}ms): ${err instanceof Error ? err.message : String(err)}`,
+        source: 'local',
+      };
+    }
   }
 }

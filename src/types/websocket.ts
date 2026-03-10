@@ -60,6 +60,13 @@ export interface WsClientRestart {
   readonly reason: 'reconnect';
 }
 
+export interface WsLogsResponse {
+  readonly type: 'logs_response';
+  readonly request_id: string;
+  readonly lines: string[];
+  readonly error?: string;
+}
+
 export type WsOutboundMessage =
   | WsAuthMessage
   | WsContextResponse
@@ -67,7 +74,8 @@ export type WsOutboundMessage =
   | WsDeepToolResult
   | WsCallResponse
   | WsWalkieResponse
-  | WsClientRestart;
+  | WsClientRestart
+  | WsLogsResponse;
 
 // ── Inbound Messages (Server → Client) ───────────────────────
 
@@ -148,4 +156,9 @@ export type WsEvent =
   | WsApprovalResponded
   | WsWalkieRequest;
 
-export type WsInboundMessage = WsAuthOk | WsAuthError | WsEvent;
+export interface WsRequestLogs {
+  readonly type: 'request_logs';
+  readonly request_id: string;
+}
+
+export type WsInboundMessage = WsAuthOk | WsAuthError | WsEvent | WsRequestLogs;

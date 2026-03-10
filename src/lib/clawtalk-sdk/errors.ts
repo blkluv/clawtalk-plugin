@@ -8,12 +8,38 @@
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly responseBody?: string;
+  /** Parsed error code from server JSON response (e.g. "not_found", "missing_field"). */
+  readonly serverCode?: string;
+  /** Parsed human-readable error detail from server JSON response. */
+  readonly serverMessage?: string;
 
   constructor(statusCode: number, message: string, responseBody?: string) {
-    super(message);
+    // Try to extract a useful message from the response body
+    let serverCode: string | undefined;
+    let serverMessage: string | undefined;
+    if (responseBody) {
+      try {
+        const parsed = JSON.parse(responseBody);
+        const err = parsed.error || parsed;
+        serverCode = err.code || undefined;
+        serverMessage = err.message || err.detail || undefined;
+      } catch {
+        // Not JSON — use raw body if short enough
+        if (responseBody.length < 200) serverMessage = responseBody;
+      }
+    }
+
+    // Build a message that actually tells the agent what went wrong
+    const fullMessage = serverMessage
+      ? `${message} — ${serverMessage}`
+      : message;
+
+    super(fullMessage);
     this.name = 'ApiError';
     this.statusCode = statusCode;
     this.responseBody = responseBody;
+    this.serverCode = serverCode;
+    this.serverMessage = serverMessage;
   }
 
   static unauthorized(message = 'Invalid or expired API key'): ApiError {

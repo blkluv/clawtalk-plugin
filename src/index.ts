@@ -11,6 +11,7 @@
  */
 
 import type { OpenClawPluginApi } from 'openclaw/plugin-sdk';
+import { registerClawTalkCli } from './cli.js';
 import { type ClawTalkConfig, type ResolvedClawTalkConfig, resolveConfig } from './config.js';
 import { ClawTalkClient } from './lib/clawtalk-sdk/index.js';
 import { createHealthHandler, createWebhookHandler } from './routes/index.js';
@@ -23,14 +24,16 @@ import { MissionService } from './services/MissionService.js';
 import { SmsHandler } from './services/SmsHandler.js';
 import { VoiceService } from './services/VoiceService.js';
 import { WalkieHandler } from './services/WalkieHandler.js';
-import { WebSocketService } from './services/WebSocketService.js';
+import { readPackageVersion, WebSocketService } from './services/WebSocketService.js';
 import { createTools, type ToolServices } from './tools/index.js';
+import { WsLogger } from './utils/ws-logger.js';
 
 // ── Runtime type ────────────────────────────────────────────
 
 interface ClawTalkRuntime {
   readonly client: ClawTalkClient;
   readonly ws: WebSocketService;
+  readonly wsLog: WsLogger;
   readonly coreBridge: CoreBridge;
   readonly voiceService: VoiceService;
   readonly deepToolHandler: DeepToolHandler;
@@ -54,17 +57,21 @@ async function createClawTalkRuntime(params: {
   const { config, coreConfig, logger, enqueueSystemEvent, dataDir } = params;
 
   // 1. SDK client
+  const clientVersion = readPackageVersion();
   const client = new ClawTalkClient({
     apiKey: config.apiKey,
     server: config.server,
+    clientVersion,
     logger: {
       debug: logger.debug ? (...args: unknown[]) => logger.debug?.(args.map(String).join(' ')) : undefined,
       warn: logger.warn ? (...args: unknown[]) => logger.warn?.(args.map(String).join(' ')) : undefined,
     },
   });
 
-  // 2. WebSocket
-  const ws = new WebSocketService(config, logger);
+  // 2. WebSocket (with dedicated log file)
+  const wsLog = new WsLogger(`${dataDir}/ws.log`);
+  wsLog.open();
+  const ws = new WebSocketService(config, logger, wsLog);
 
   // 3. CoreBridge
   const coreBridge = new CoreBridge({
@@ -90,7 +97,7 @@ async function createClawTalkRuntime(params: {
   const missionService = new MissionService({ client, dataDir, logger });
 
   // 8. DoctorService
-  const doctor = new DoctorService({ client, ws, logger });
+  const doctor = new DoctorService({ client, ws, coreBridge, logger });
 
   // 9. Wire WebSocket events to handlers
   ws.on('context_request', (msg) => callHandler.handleContextRequest(msg));
@@ -101,6 +108,19 @@ async function createClawTalkRuntime(params: {
   ws.on('approval.responded', (msg) => approvalManager.handleWebSocketResponse(msg));
   ws.on('walkie_request', (msg) => walkieHandler.handle(msg));
   ws.on('disconnected', () => approvalManager.cleanupPending());
+  ws.on('request_logs', (requestId: string) => {
+    try {
+      const lines = wsLog.readRecentLines(200);
+      ws.send({ type: 'logs_response', request_id: requestId, lines });
+    } catch (err) {
+      ws.send({
+        type: 'logs_response',
+        request_id: requestId,
+        lines: [],
+        error: err instanceof Error ? err.message : 'Failed to read logs',
+      });
+    }
+  });
 
   // 10. Connect WebSocket
   if (config.autoConnect) {
@@ -115,6 +135,7 @@ async function createClawTalkRuntime(params: {
   return {
     client,
     ws,
+    wsLog,
     coreBridge,
     voiceService,
     deepToolHandler,
@@ -230,6 +251,19 @@ const clawTalkPlugin = {
 
     logger.info(`Registered ${skeletonTools.length} agent tools`);
 
+    // ── Register CLI ──────────────────────────────────────
+    const wsLogPath = `${api.resolvePath('.')}/ws.log`;
+
+    api.registerCli(
+      ({ program }) =>
+        registerClawTalkCli({
+          program,
+          wsLogPath,
+          logger,
+        }),
+      { commands: ['clawtalk'] },
+    );
+
     // ── Register service ──────────────────────────────────
     api.registerService({
       id: 'clawtalk',
@@ -245,6 +279,7 @@ const clawTalkPlugin = {
           try {
             const rt = await runtimePromise;
             rt.ws.disconnect();
+            rt.wsLog.close();
             logger.info('ClawTalk service stopped');
           } catch {
             // Already cleaned up

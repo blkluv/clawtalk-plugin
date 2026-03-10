@@ -89,12 +89,41 @@ export class ToolError extends ClawTalkError {
   static fromError(tool: string, err: unknown): ToolError {
     if (err instanceof ToolError) return err;
     if (err instanceof ClawTalkError) return new ToolError(tool, err.message, { code: err.code });
-    // SDK ApiError doesn't extend ClawTalkError but is still an Error
+    // SDK ApiError: surface the server's error message + fix hints
     if (err instanceof Error && err.name === 'ApiError') {
       const apiErr = err as import('../lib/clawtalk-sdk/errors.js').ApiError;
-      return new ToolError(tool, apiErr.message, { statusCode: apiErr.statusCode });
+      const hint = ToolError.getFixHint(apiErr.serverCode, apiErr.serverMessage);
+      const message = hint ? `${apiErr.message}. Fix: ${hint}` : apiErr.message;
+      return new ToolError(tool, message, {
+        statusCode: apiErr.statusCode,
+        serverCode: apiErr.serverCode,
+      });
     }
     const message = err instanceof Error ? err.message : String(err);
     return new ToolError(tool, message);
+  }
+
+  /** Return an actionable fix hint for known server error codes. */
+  private static getFixHint(code?: string, message?: string): string | null {
+    if (!code && !message) return null;
+    const c = code || '';
+    const m = (message || '').toLowerCase();
+
+    if (c === 'step_not_found' || m.includes('step') && m.includes('not found')) {
+      return 'Use clawtalk_mission_get_plan to list valid step IDs for this mission.';
+    }
+    if (c === 'missing_field') {
+      return 'Check the tool parameters and provide all required fields.';
+    }
+    if (c === 'not_found' && m.includes('assistant')) {
+      return 'Use clawtalk_assistants (action: "list") to find valid assistant IDs.';
+    }
+    if (c === 'not_found' && m.includes('mission')) {
+      return 'Use clawtalk_mission_list to find valid mission slugs.';
+    }
+    if (c === 'quota_exceeded') {
+      return 'The user has hit their plan limit for this resource. Inform them of the quota.';
+    }
+    return null;
   }
 }

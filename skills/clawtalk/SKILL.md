@@ -76,6 +76,12 @@ During active calls, the agent automatically receives:
 - Approval instructions (when/how to request)
 - Full tool access reminder
 
+## IO Screening
+
+IO screening filters deep tool requests through Lakera Guard before processing.
+Disabled by default for new users. Toggle via the portal security settings or API.
+When enabled, flagged requests are blocked and the caller hears an explicit denial message.
+
 ## Common Pitfalls
 
 - **Slug consistency**: Mission slugs must be unique and consistent across all tool calls
