@@ -20,6 +20,7 @@ import { CallHandler } from './services/CallHandler.js';
 import { CoreBridge, type CoreConfig } from './services/CoreBridge.js';
 import { DeepToolHandler } from './services/DeepToolHandler.js';
 import { DoctorService } from './services/DoctorService.js';
+import { HeartbeatHandler } from './services/HeartbeatHandler.js';
 import { MissionEventHandler } from './services/MissionEventHandler.js';
 import { MissionService } from './services/MissionService.js';
 import { SmsHandler } from './services/SmsHandler.js';
@@ -50,6 +51,7 @@ interface ClawTalkRuntime {
   readonly approvalManager: ApprovalManager;
   readonly missionService: MissionService;
   readonly missionEventHandler: MissionEventHandler;
+  readonly heartbeatHandler: HeartbeatHandler;
   readonly doctor: DoctorService;
 }
 
@@ -108,6 +110,9 @@ async function createClawTalkRuntime(params: {
   const missionEventHandler = new MissionEventHandler({ ws, coreBridge, missions: missionService, logger });
   missionEventHandler.start();
 
+  // 8b. HeartbeatHandler (mission polling + reaping)
+  const heartbeatHandler = new HeartbeatHandler({ missions: missionService, coreBridge, logger });
+
   // 9. DoctorService
   const doctor = new DoctorService({ client, ws, coreBridge, logger, openclawRoot: process.env.OPENCLAW_ROOT?.trim() });
 
@@ -157,6 +162,7 @@ async function createClawTalkRuntime(params: {
     approvalManager,
     missionService,
     missionEventHandler,
+    heartbeatHandler,
     doctor,
   };
 }
@@ -300,6 +306,38 @@ const clawTalkPlugin = {
           }
         }
       },
+    });
+
+    // ── Register heartbeat hook ─────────────────────────────
+    // api.on() registers into typedHooks (plugin hook runner).
+    // api.registerHook() is the internal event system (different dispatch).
+    (api as any).on('before_agent_start', async (event: any, ctx: any) => {
+      logger.info(`[Heartbeat] before_agent_start hook fired. sessionKey=${ctx?.sessionKey ?? 'unknown'}`);
+      // Only run on main session heartbeats
+      if (ctx?.sessionKey && ctx.sessionKey !== 'agent:main:main') {
+        logger.info(`[Heartbeat] Skipping non-main session: ${ctx.sessionKey}`);
+        return;
+      }
+      const prompt = event?.prompt as string | undefined;
+      if (!prompt) return;
+
+      let rt: ClawTalkRuntime;
+      try {
+        rt = await ensureRuntime();
+      } catch {
+        return; // Runtime not ready
+      }
+
+      if (!rt.heartbeatHandler.isHeartbeat(prompt)) return;
+
+      try {
+        const context = await rt.heartbeatHandler.check();
+        if (context) {
+          return { prependContext: context };
+        }
+      } catch (err) {
+        logger.warn?.(`[Heartbeat] Hook error: ${err instanceof Error ? err.message : String(err)}`);
+      }
     });
 
     // ── Register HTTP routes ──────────────────────────────
