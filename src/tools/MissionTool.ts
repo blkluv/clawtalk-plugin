@@ -409,11 +409,9 @@ export class MissionListTool {
   readonly parameters = MissionListSchema;
 
   private readonly missions: MissionService;
-  private readonly logger: Logger;
 
   constructor(deps: ToolDeps) {
     this.missions = deps.missions;
-    this.logger = deps.logger;
   }
 
   async execute(_toolCallId: string, raw: Record<string, unknown>) {

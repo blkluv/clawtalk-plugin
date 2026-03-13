@@ -383,13 +383,13 @@ export class MissionService {
     return this.client.missions.plans.get(existing.mission_id, existing.run_id);
   }
 
-  /** Get events for a mission from server. */
+  /** Get aggregate events for a mission from server. */
   async getEvents(slug: string) {
     const existing = await this.getSlugState(slug);
-    if (!existing.mission_id || !existing.run_id) {
+    if (!existing.mission_id) {
       throw new Error(`No active mission found for slug '${slug}'`);
     }
-    return this.client.missions.events.list(existing.mission_id, existing.run_id);
+    return this.client.missions.events.aggregate(existing.mission_id);
   }
 
   /**

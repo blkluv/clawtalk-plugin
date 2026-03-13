@@ -12,6 +12,24 @@ export interface MissionsConfig {
   readonly defaultVoice?: string;
   /** Default AI model for mission assistants */
   readonly defaultModel?: string;
+  /** Mission observer (background lifecycle nudges) */
+  readonly observer?: {
+    /** Enable MissionObserver background checks. Default: true */
+    readonly enabled?: boolean;
+    /** Observer interval in milliseconds. Default: 300000 (5m) */
+    readonly intervalMs?: number;
+    /** Stale mission threshold in milliseconds. Default: 7200000 (2h) */
+    readonly staleThresholdMs?: number;
+    /** Cooldowns to prevent repeated nudges */
+    readonly cooldowns?: {
+      /** Pending call follow-up cooldown (ms). Default: 900000 (15m) */
+      readonly pendingCallsMs?: number;
+      /** Stale mission cooldown (ms). Default: 3600000 (1h) */
+      readonly staleMs?: number;
+      /** Terminal-plan-but-running cooldown (ms). Default: 3600000 (1h) */
+      readonly terminalPlanMs?: number;
+    };
+  };
 }
 
 export interface ClawTalkConfig {
@@ -52,12 +70,27 @@ export interface ResolvedClawTalkConfig {
     readonly enabled: boolean;
     readonly defaultVoice: string | undefined;
     readonly defaultModel: string | undefined;
+    readonly observer: {
+      readonly enabled: boolean;
+      readonly intervalMs: number;
+      readonly staleThresholdMs: number;
+      readonly cooldowns: {
+        readonly pendingCallsMs: number;
+        readonly staleMs: number;
+        readonly terminalPlanMs: number;
+      };
+    };
   };
 }
 
 const DEFAULT_SERVER = 'https://clawdtalk.com';
 const DEFAULT_AGENT_ID = 'main';
 const DEFAULT_AGENT_NAME = 'ClawTalk';
+const DEFAULT_MISSION_OBSERVER_INTERVAL_MS = 5 * 60 * 1000;
+const DEFAULT_MISSION_STALE_MS = 2 * 60 * 60 * 1000;
+const DEFAULT_MISSION_PENDING_COOLDOWN_MS = 15 * 60 * 1000;
+const DEFAULT_MISSION_STALE_COOLDOWN_MS = 60 * 60 * 1000;
+const DEFAULT_MISSION_TERMINAL_COOLDOWN_MS = 60 * 60 * 1000;
 
 const DEFAULT_VOICE_CONTEXT = [
   'You are a voice assistant. Keep responses concise and conversational.',
@@ -70,6 +103,7 @@ export function resolveConfig(raw: ClawTalkConfig): ResolvedClawTalkConfig {
   const ownerName = raw.ownerName ?? 'there';
   const agentName = raw.agentName ?? DEFAULT_AGENT_NAME;
   const defaultGreeting = `Hey ${ownerName}, what's up?`;
+  const missionsEnabled = raw.missions?.enabled ?? true;
 
   return {
     enabled: raw.enabled ?? true,
@@ -82,9 +116,19 @@ export function resolveConfig(raw: ClawTalkConfig): ResolvedClawTalkConfig {
     autoConnect: raw.autoConnect ?? true,
     voiceContext: raw.voiceContext ?? DEFAULT_VOICE_CONTEXT,
     missions: {
-      enabled: raw.missions?.enabled ?? true,
+      enabled: missionsEnabled,
       defaultVoice: raw.missions?.defaultVoice,
       defaultModel: raw.missions?.defaultModel,
+      observer: {
+        enabled: missionsEnabled && (raw.missions?.observer?.enabled ?? true),
+        intervalMs: raw.missions?.observer?.intervalMs ?? DEFAULT_MISSION_OBSERVER_INTERVAL_MS,
+        staleThresholdMs: raw.missions?.observer?.staleThresholdMs ?? DEFAULT_MISSION_STALE_MS,
+        cooldowns: {
+          pendingCallsMs: raw.missions?.observer?.cooldowns?.pendingCallsMs ?? DEFAULT_MISSION_PENDING_COOLDOWN_MS,
+          staleMs: raw.missions?.observer?.cooldowns?.staleMs ?? DEFAULT_MISSION_STALE_COOLDOWN_MS,
+          terminalPlanMs: raw.missions?.observer?.cooldowns?.terminalPlanMs ?? DEFAULT_MISSION_TERMINAL_COOLDOWN_MS,
+        },
+      },
     },
   };
 }

@@ -443,6 +443,20 @@ export interface MissionEventListResponse {
   readonly meta: PaginationMeta;
 }
 
+/** GET /v1/missions/:id/events — aggregate mission event view used by portal */
+export interface MissionEventsAggregateResponse {
+  readonly telnyx_events?: MissionEventResponse[];
+  readonly scheduled_events?: ScheduledEventResponse[];
+  readonly local_events?: Array<{
+    readonly id: string;
+    readonly mission_id: string;
+    readonly type: string;
+    readonly status: string;
+    readonly target_phone?: string | null;
+    readonly step_id?: string | null;
+  }>;
+}
+
 // ── Assistant Connection ──────────────────────────────────────
 
 /** GET /v1/assistants/:id/connection-id */

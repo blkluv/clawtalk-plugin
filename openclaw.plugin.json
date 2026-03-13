@@ -61,6 +61,47 @@
           "defaultModel": {
             "type": "string",
             "description": "Default AI model for mission assistants"
+          },
+          "observer": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "intervalMs": {
+                "type": "number",
+                "description": "Mission observer interval (ms)",
+                "default": 300000
+              },
+              "staleThresholdMs": {
+                "type": "number",
+                "description": "Mission stale threshold (ms)",
+                "default": 7200000
+              },
+              "cooldowns": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "pendingCallsMs": {
+                    "type": "number",
+                    "description": "Cooldown between pending-call nudges (ms)",
+                    "default": 900000
+                  },
+                  "staleMs": {
+                    "type": "number",
+                    "description": "Cooldown between stale-mission nudges (ms)",
+                    "default": 3600000
+                  },
+                  "terminalPlanMs": {
+                    "type": "number",
+                    "description": "Cooldown between terminal-plan nudges (ms)",
+                    "default": 3600000
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -107,6 +148,30 @@
     },
     "missions.defaultModel": {
       "label": "Default Model",
+      "advanced": true
+    },
+    "missions.observer.enabled": {
+      "label": "Enable Mission Observer",
+      "advanced": true
+    },
+    "missions.observer.intervalMs": {
+      "label": "Mission Observer Interval (ms)",
+      "advanced": true
+    },
+    "missions.observer.staleThresholdMs": {
+      "label": "Mission Stale Threshold (ms)",
+      "advanced": true
+    },
+    "missions.observer.cooldowns.pendingCallsMs": {
+      "label": "Pending Call Cooldown (ms)",
+      "advanced": true
+    },
+    "missions.observer.cooldowns.staleMs": {
+      "label": "Stale Mission Cooldown (ms)",
+      "advanced": true
+    },
+    "missions.observer.cooldowns.terminalPlanMs": {
+      "label": "Terminal Plan Cooldown (ms)",
       "advanced": true
     }
   }
