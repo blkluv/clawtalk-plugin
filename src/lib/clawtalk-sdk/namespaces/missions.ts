@@ -7,6 +7,7 @@ import type {
   MissionDetailResponse,
   MissionEventListResponse,
   MissionEventResponse,
+  MissionEventsAggregateResponse,
   MissionListResponse,
   MissionResponse,
   PlanStepResponse,
@@ -96,6 +97,13 @@ class MissionEventsNamespace {
       resolve(ENDPOINTS.listEvents.path, { missionId, runId }),
     );
     return result.data ?? [];
+  }
+
+  async aggregate(missionId: string): Promise<MissionEventsAggregateResponse> {
+    return this.request<MissionEventsAggregateResponse>(
+      'GET',
+      resolve(ENDPOINTS.getMissionEvents.path, { missionId }),
+    );
   }
 }
 

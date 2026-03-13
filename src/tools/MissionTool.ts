@@ -13,9 +13,15 @@ import { ToolError } from '../utils/errors.js';
 
 // ── Helpers ─────────────────────────────────────────────────
 
-function formatResult(payload: unknown) {
+const STEP_REMINDER =
+  '💡 Reminder: Update step status as you progress (pending → in_progress → completed/failed/skipped). All steps must be terminal before completing the mission.';
+
+function formatResult(payload: unknown, includeStepReminder = false) {
+  const text = includeStepReminder
+    ? `${JSON.stringify(payload, null, 2)}\n\n${STEP_REMINDER}`
+    : JSON.stringify(payload, null, 2);
   return {
-    content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }],
+    content: [{ type: 'text' as const, text }],
     details: payload,
   };
 }
@@ -108,7 +114,11 @@ export const MissionMemorySchema = Type.Object({
   value: Type.Optional(Type.String({ description: 'JSON value (for save/append)' })),
 });
 
-export const MissionListSchema = Type.Object({});
+export const MissionListSchema = Type.Object({
+  server: Type.Optional(Type.Boolean({ description: 'Fetch missions from the server API instead of local state. Use this to look up any mission by name or see historical missions.' })),
+  status: Type.Optional(Type.String({ description: 'Filter by status when fetching from server (e.g. "running", "succeeded", "cancelled", "failed").' })),
+  search: Type.Optional(Type.String({ description: 'Search missions by name when fetching from server.' })),
+});
 
 export const MissionGetPlanSchema = Type.Object({
   slug: Type.String({ description: 'Mission slug' }),
@@ -155,7 +165,7 @@ export class MissionInitTool {
         message: result.resumed
           ? `Resumed existing mission '${result.slug}'`
           : `Created mission '${result.slug}' with run ${result.runId}`,
-      });
+      }, true);
     } catch (err) {
       throw ToolError.fromError('clawtalk_mission_init', err);
     }
@@ -238,7 +248,7 @@ export class MissionScheduleTool {
         channel,
         scheduledAt: raw.scheduledAt,
         message: `Scheduled ${channel} event ${eventId} for ${raw.scheduledAt}`,
-      });
+      }, true);
     } catch (err) {
       throw ToolError.fromError('clawtalk_mission_schedule', err);
     }
@@ -344,7 +354,7 @@ export class MissionLogEventTool {
         stepId: raw.stepId as string | undefined,
         payload: parseJsonParam(raw.payload as string | undefined) as Record<string, unknown> | undefined,
       });
-      return formatResult({ eventId: id, message: `Logged event: ${raw.summary}` });
+      return formatResult({ eventId: id, message: `Logged event: ${raw.summary}` }, true);
     } catch (err) {
       throw ToolError.fromError('clawtalk_mission_log_event', err);
     }
@@ -404,10 +414,46 @@ export class MissionListTool {
     this.missions = deps.missions;
   }
 
-  async execute(_toolCallId: string, _raw: Record<string, unknown>) {
+  async execute(_toolCallId: string, raw: Record<string, unknown>) {
     try {
+      const serverFetch = raw.server === true;
+
+      if (serverFetch) {
+        // Fetch from server API — includes all missions (historical, cancelled, etc.)
+        const client = this.missions.getClient();
+        let missions = await client.missions.list(50);
+
+        // Client-side filtering
+        if (raw.status && typeof raw.status === 'string') {
+          const statusFilter = raw.status.toLowerCase();
+          missions = missions.filter((m) => m.status.toLowerCase() === statusFilter);
+        }
+        if (raw.search && typeof raw.search === 'string') {
+          const searchTerm = raw.search.toLowerCase();
+          missions = missions.filter((m) => m.name.toLowerCase().includes(searchTerm));
+        }
+
+        return formatResult({
+          source: 'server',
+          missions: missions.map((m) => ({
+            id: m.id,
+            name: m.name,
+            status: m.status,
+            channel: m.channel,
+            target_count: m.target_count,
+            events_used: m.events_used,
+            result_summary: m.result_summary,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
+          })),
+          message: missions.length ? `${missions.length} mission(s) from server` : 'No missions found',
+        });
+      }
+
+      // Default: local state only (active missions with plugin state)
       const list = await this.missions.listMissions();
       return formatResult({
+        source: 'local',
         missions: list.map((m) => ({
           slug: m.slug,
           missionName: m.state.mission_name,
