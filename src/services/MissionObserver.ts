@@ -2,8 +2,9 @@
  * MissionObserver — background mission lifecycle nudges.
  *
  * Runs on a fixed interval (default 5m) independent of chat turns.
- * Checks running missions for:
- * 1. Pending/scheduled call follow-ups
+ * Checks every running mission on each interval and nudges a mission-session review,
+ * then adds targeted hints for:
+ * 1. Completed non-success call outcomes that need follow-up
  * 2. Stale missions (no activity > stale threshold)
  * 3. All-terminal plans that are still marked running
  *
@@ -16,7 +17,6 @@ import type { ICoreBridge } from './CoreBridge.js';
 import type { MissionService } from './MissionService.js';
 
 const TERMINAL_STEP_STATUSES = new Set(['completed', 'failed', 'skipped']);
-const PENDING_EVENT_STATUSES = new Set(['pending', 'scheduled']);
 
 export interface MissionObserverConfig {
   readonly enabled: boolean;
@@ -43,7 +43,7 @@ type NudgeState = {
 };
 
 type MissionAction =
-  | { type: 'pending_calls'; detail: string }
+  | { type: 'review'; detail: string }
   | { type: 'call_outcomes'; detail: string }
   | { type: 'stale'; detail: string }
   | { type: 'terminal_plan'; detail: string };
@@ -74,9 +74,7 @@ export class MissionObserver {
 
     const tick = () => {
       this.check().catch((err) => {
-        this.logger.warn?.(
-          `[MissionObserver] Tick failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        this.logger.warn?.(`[MissionObserver] Tick failed: ${err instanceof Error ? err.message : String(err)}`);
       });
     };
 
@@ -111,9 +109,7 @@ export class MissionObserver {
 
       const localMissions = await this.missions.listMissions();
       const slugByMissionId = new Map(
-        localMissions
-          .filter((m) => m.state.mission_id)
-          .map((m) => [m.state.mission_id ?? '', m.slug]),
+        localMissions.filter((m) => m.state.mission_id).map((m) => [m.state.mission_id ?? '', m.slug]),
       );
 
       for (const mission of serverMissions) {
@@ -126,9 +122,13 @@ export class MissionObserver {
         this.logger.info(`[MissionObserver] Checking mission ${mission.name} (${slug})`);
 
         const actions = await this.collectActions(mission, slug);
-        this.logger.info(`[MissionObserver] Actions detected for ${slug}: ${actions.map((a) => a.type).join(', ') || 'none'}`);
+        this.logger.info(
+          `[MissionObserver] Actions detected for ${slug}: ${actions.map((a) => a.type).join(', ') || 'none'}`,
+        );
         const dueActions = this.filterByCooldown(slug, actions);
-        this.logger.info(`[MissionObserver] Actions after cooldown for ${slug}: ${dueActions.map((a) => a.type).join(', ') || 'none'}`);
+        this.logger.info(
+          `[MissionObserver] Actions after cooldown for ${slug}: ${dueActions.map((a) => a.type).join(', ') || 'none'}`,
+        );
 
         if (dueActions.length === 0) continue;
 
@@ -168,49 +168,51 @@ export class MissionObserver {
     mission: { id: string; name: string; status: string; updated_at?: string },
     slug: string,
   ): Promise<MissionAction[]> {
-    const actions: MissionAction[] = [];
+    const actions: MissionAction[] = [
+      { type: 'review', detail: 'Review mission state and take any next action that is now possible.' },
+    ];
 
     let steps: Array<{ id?: string; step_id?: string; title: string; status: string }> = [];
-    let scheduledEvents: Array<{ id: string; channel: string; status: string; step_id?: string; call_status?: string | null }> = [];
+    let scheduledEvents: Array<{
+      id: string;
+      channel: string;
+      status: string;
+      step_id?: string;
+      call_status?: string | null;
+    }> = [];
 
     try {
       const plan = await this.missions.getPlan(slug);
       steps = ((plan as unknown as Record<string, unknown>)?.steps ?? plan ?? []) as unknown as typeof steps;
       this.logger.info(`[MissionObserver] ${slug}: plan steps=${steps.length}`);
     } catch (err) {
-      this.logger.warn?.(`[MissionObserver] ${slug}: failed to fetch plan: ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn?.(
+        `[MissionObserver] ${slug}: failed to fetch plan: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
     try {
       const evts = await this.missions.getEvents(slug);
-      scheduledEvents =
-        ((evts as unknown as Record<string, unknown>)?.scheduled_events ?? []) as typeof scheduledEvents;
+      scheduledEvents = ((evts as unknown as Record<string, unknown>)?.scheduled_events ??
+        []) as typeof scheduledEvents;
       this.logger.info(`[MissionObserver] ${slug}: scheduled events=${scheduledEvents.length}`);
     } catch (err) {
-      this.logger.warn?.(`[MissionObserver] ${slug}: failed to fetch events: ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn?.(
+        `[MissionObserver] ${slug}: failed to fetch events: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
-    const pendingCallEvents = scheduledEvents.filter(
-      (e) => e.channel === 'call' && PENDING_EVENT_STATUSES.has(e.status),
-    );
-    if (pendingCallEvents.length > 0) {
-      this.logger.info(`[MissionObserver] ${slug}: pending call events=${pendingCallEvents.length}`);
-      actions.push({
-        type: 'pending_calls',
-        detail: `${pendingCallEvents.length} pending call(s) require follow-up.`,
-      });
-    }
+    // Intentionally do not nudge on pending/scheduled calls.
+    // Mission turns should be triggered by outcomes/events after calls execute.
 
     const unresolvedCallOutcomes = scheduledEvents.filter(
-      (e) =>
-        e.channel === 'call' &&
-        e.status === 'completed' &&
-        !!e.call_status &&
-        e.call_status !== 'completed',
+      (e) => e.channel === 'call' && e.status === 'completed' && !!e.call_status && e.call_status !== 'completed',
     );
     if (unresolvedCallOutcomes.length > 0) {
       const statuses = [...new Set(unresolvedCallOutcomes.map((e) => e.call_status).filter(Boolean))].join(', ');
-      this.logger.info(`[MissionObserver] ${slug}: unresolved call outcomes=${unresolvedCallOutcomes.length} (${statuses})`);
+      this.logger.info(
+        `[MissionObserver] ${slug}: unresolved call outcomes=${unresolvedCallOutcomes.length} (${statuses})`,
+      );
       actions.push({
         type: 'call_outcomes',
         detail: `${unresolvedCallOutcomes.length} completed call event(s) need resolution (call_status: ${statuses}).`,
@@ -265,7 +267,7 @@ export class MissionObserver {
 
   private cooldownFor(type: MissionAction['type']): number {
     switch (type) {
-      case 'pending_calls':
+      case 'review':
       case 'call_outcomes':
         return this.config.cooldowns.pendingCallsMs;
       case 'stale':
@@ -279,7 +281,7 @@ export class MissionObserver {
 
   private mapActionKey(type: MissionAction['type']): keyof NudgeState {
     switch (type) {
-      case 'pending_calls':
+      case 'review':
       case 'call_outcomes':
         return 'pendingCallsAt';
       case 'stale':
@@ -302,11 +304,7 @@ export class MissionObserver {
     this.lastNudges.set(slug, state);
   }
 
-  private async sendMissionPrompt(params: {
-    slug: string;
-    name: string;
-    actions: MissionAction[];
-  }): Promise<boolean> {
+  private async sendMissionPrompt(params: { slug: string; name: string; actions: MissionAction[] }): Promise<boolean> {
     const sessionKey = `clawtalk:mission:${params.slug}`;
 
     const lines = [
@@ -314,9 +312,10 @@ export class MissionObserver {
       ...params.actions.map((a) => `- ${a.detail}`),
       '',
       'Please review the mission status and take action:',
-      '1. Use `clawtalk_mission_event_status` to resolve pending calls and completed non-success call outcomes',
+      '1. Use `clawtalk_mission_event_status` to resolve completed non-success call outcomes',
       '2. Advance remaining steps or update the plan status',
-      '3. Complete or fail the mission if work is finished',
+      '3. Use `clawtalk_mission_memory` to retrieve mission memories saved throughout process.',
+      '4. Complete or fail the mission if work is finished',
     ];
 
     try {
