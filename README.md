@@ -27,7 +27,9 @@ After installing, open your OpenClaw config (`~/.openclaw/openclaw.json`) and ad
     "entries": {
       "clawtalk": {
         "enabled": true,
-        "apiKey": "your-clawtalk-api-key"
+        "config": {
+          "apiKey": "your-clawtalk-api-key"
+        }
       }
     }
   }
@@ -49,9 +51,12 @@ Everything below has sensible defaults. Only set them if you need to customise b
 ```json
 {
   "clawtalk": {
-    "apiKey": "your-api-key",
-    "ownerName": "Your Name",
-    "agentName": "My Agent"
+    "enabled": true,
+    "config": {
+      "apiKey": "your-api-key",
+      "ownerName": "Your Name",
+      "agentName": "My Agent"
+    }
   }
 }
 ```
