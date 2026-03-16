@@ -62,7 +62,14 @@ const NC = '\x1b[0m';
  * A SIGINT handler ensures the terminal is restored if the user hits Ctrl+C.
  */
 function readlineSync(prompt: string, opts?: { silent?: boolean }): string {
-  const fd = fs.openSync('/dev/tty', 'r');
+  let fd: number;
+  try {
+    fd = fs.openSync('/dev/tty', 'r');
+  } catch {
+    throw new Error(
+      'Interactive input requires a TTY. Run this command in a terminal (not piped/backgrounded).',
+    );
+  }
   let ttyStream: tty.ReadStream | undefined;
   let sigintHandler: (() => void) | undefined;
 
@@ -429,6 +436,12 @@ export function registerClawTalkCli(params: { program: CommandLike; wsLogPath: s
     .command('config')
     .description('Reconfigure ClawTalk API key and server URL')
     .action(async () => {
+      if (!process.stdin.isTTY) {
+        console.error(`${RED}✗ The config command requires an interactive terminal.${NC}`);
+        console.error('  Run this command directly in your terminal (not piped or backgrounded).');
+        process.exit(1);
+      }
+
       const json = loadConfigOrDie();
       const current = getPluginConfig(json);
 
