@@ -45,7 +45,7 @@
       "./build/index.js"
     ]
   },
-  "clawbot": {
+  "clawdbot": {
     "extensions": [
       "./build/index.js"
     ]
