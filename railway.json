@@ -1,0 +1,6 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "rm -f package-lock.json && npm install opusscript@0.1.1 && npm ci --omit=dev && npm run build"
+  }
+}
